@@ -1,12 +1,16 @@
 import React from "react";
 
+type Section =
+    | { icon?: string; text: string; isButton?: boolean }
+    | "divider";
+
 interface SidebarProps {
     visible: boolean;
     setSidebarVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ visible, setSidebarVisible }) => {
-    const sections = [
+    const sections: Section[] = [
         { icon: "🏠", text: "Home" },
         { icon: "🕹️", text: "Recently Played" },
         { icon: "🔥", text: "Trending Now" },
@@ -54,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, setSidebarVisible }) => {
                             <button
                                 key={index}
                                 className="flex items-center gap-4 p-4 text-sm font-medium bg-purple-600 hover:bg-purple-500 rounded-2xl mt-4 ml-6"
-                            >
+                                onClick={() => setSidebarVisible(false)}>
                                 {section.icon && <span className="text-xl">{section.icon}</span>}
                                 <span>{section.text}</span>
                             </button>
