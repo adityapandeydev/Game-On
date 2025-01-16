@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import GameCard from "./GameCard";
+import TicTacToe from "./TicTacToe";
 
 const GameGrid: React.FC = () => {
+    const [selectedGame, setSelectedGame] = useState<string | null>(null);
+
     // Define trending games and genres
     const trendingGames = [
         { id: "t1", title: "Game 1" },
@@ -36,29 +39,54 @@ const GameGrid: React.FC = () => {
         },
     ];
 
+    const handleCardClick = (gameTitle: string) => {
+        if (gameTitle === "Tic-Tac-Toe") {
+            setSelectedGame("TicTacToe");
+        }
+    };
+
     return (
         <div className="p-4">
-            {/* Trending Now Section */}
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
-                <div className="grid grid-cols-3 gap-4">
-                    {trendingGames.map((game) => (
-                        <GameCard key={game.id} title={game.title} />
-                    ))}
-                </div>
-            </div>
-
-            {/* Genre Sections */}
-            {genres.map((genre) => (
-                <div key={genre.name} className="mb-8">
-                    <h2 className="text-2xl font-bold mb-4">{genre.name}</h2>
-                    <div className="grid grid-cols-3 gap-4">
-                        {genre.games.map((game) => (
-                            <GameCard key={game.id} title={game.title} />
-                        ))}
+            {/* Show Tic Tac Toe game if selected */}
+            {selectedGame === "TicTacToe" ? (
+                <TicTacToe />
+            ) : (
+                <>
+                    {/* Trending Now Section */}
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
+                        <div className="grid grid-cols-3 gap-4">
+                            {trendingGames.map((game) => (
+                                <div
+                                    key={game.id}
+                                    className="cursor-pointer"
+                                    onClick={() => handleCardClick(game.title)}
+                                >
+                                    <GameCard title={game.title} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            ))}
+
+                    {/* Genre Sections */}
+                    {genres.map((genre) => (
+                        <div key={genre.name} className="mb-8">
+                            <h2 className="text-2xl font-bold mb-4">{genre.name}</h2>
+                            <div className="grid grid-cols-3 gap-4">
+                                {genre.games.map((game) => (
+                                    <div
+                                        key={game.id}
+                                        className="cursor-pointer"
+                                        onClick={() => handleCardClick(game.title)}
+                                    >
+                                        <GameCard title={game.title} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </>
+            )}
         </div>
     );
 };
