@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -9,6 +9,14 @@ import SignUp from "./components/SignUp";
 const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Declare and manage the login state
+
+  useEffect(() => {
+    // Check if there's a token in localStorage
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleLogin = () => {
     setIsLoggedIn(true); // Set isLoggedIn to true when login is successful
