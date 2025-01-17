@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import GameGrid from "./components/GameGrid";
@@ -8,6 +8,11 @@ import SignUp from "./components/SignUp";
 
 const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Declare and manage the login state
+
+  const handleLogin = () => {
+    setIsLoggedIn(true); // Set isLoggedIn to true when login is successful
+  };
 
   return (
     <Router>
@@ -22,8 +27,8 @@ const App: React.FC = () => {
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-y-auto">
             <Routes>
-              <Route path="/" element={<GameGrid />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<GameGrid isLoggedIn={isLoggedIn}/>} />
+              <Route path="/login" element={<Login onLogin={handleLogin}/>} />
               <Route path="/signup" element={<SignUp />} />
             </Routes>
           </div>

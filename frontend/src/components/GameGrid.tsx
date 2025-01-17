@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GameCard from "./GameCard";
-// import Login from "./Login"; // Import Login component
 
-const GameGrid: React.FC = () => {
+interface GameGridProps {
+    isLoggedIn: boolean; // Declare the prop here
+}
+
+const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
-    const navigate = useNavigate(); // Get the navigate function
+    const navigate = useNavigate();
 
     const trendingGames = [
         { id: "t1", title: "Game 1" },
@@ -43,17 +45,14 @@ const GameGrid: React.FC = () => {
 
     const handleCardClick = (gameTitle: string) => {
         if (!isLoggedIn) {
-            // If the user is not logged in, route them to the login page
             navigate("/login");
         } else {
-            // If logged in, show the selected game
             setSelectedGame(gameTitle);
         }
     };
 
     return (
         <div className="p-4">
-            {/* Show selected game */}
             {selectedGame === "TicTacToe" ? (
                 <div>Tic Tac Toe Game</div>
             ) : selectedGame === "Connect4" ? (
@@ -62,7 +61,6 @@ const GameGrid: React.FC = () => {
                 <div>Guess My Number Game</div>
             ) : (
                 <>
-                    {/* Trending Now Section */}
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -72,7 +70,6 @@ const GameGrid: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Genre Sections */}
                     {genres.map((genre) => (
                         <div key={genre.name} className="mb-8">
                             <h2 className="text-2xl font-bold mb-4">{genre.name}</h2>

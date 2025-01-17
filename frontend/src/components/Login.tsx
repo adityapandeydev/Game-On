@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-const Login: React.FC = () => {
+interface LoginProps {
+    onLogin: () => void;
+  }
+
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Implement login logic here
-        alert("Login successful!"); // Example login success logic
+        onLogin();
     };
 
     return (
