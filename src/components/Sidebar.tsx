@@ -31,12 +31,12 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, setSidebarVisible }) => {
     return (
         <div
             className={`${visible ? "hidden" : "w-16"
-                } group relative h-full bg-gray-800 transition-all duration-300`}
+            } group sticky top-1 h-screen bg-gray-800 transition-all duration-300`}
             onMouseEnter={(e) => e.currentTarget.classList.add("w-48")}
             onMouseLeave={(e) => e.currentTarget.classList.remove("w-48")}
         >
             {/* Sidebar Content */}
-            <div className="mt-4">
+            <div className="mt-4 bg-gray-800">
                 {sections.map((section, index) =>
                     section === "divider" ? (
                         <hr key={index} className="border-gray-600 my-2" />

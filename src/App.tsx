@@ -7,7 +7,7 @@ const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
   return (
-    <div className="h-screen bg-gray-900 text-white">
+    <div className="bg-gray-900 text-white">
       {/* Header */}
       <Header onSidebarToggle={() => setSidebarVisible(!sidebarVisible)} />
 
@@ -16,7 +16,7 @@ const App: React.FC = () => {
         <Sidebar setSidebarVisible={setSidebarVisible} visible={sidebarVisible} />
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col bg-gray-900">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <GameGrid />
         </div>
       </div>

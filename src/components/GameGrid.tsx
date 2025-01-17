@@ -55,7 +55,7 @@ const GameGrid: React.FC = () => {
     };
 
     return (
-        <div className="p-4 bg-gray-900">
+        <div className="p-4">
             {/* Show selected game */}
             {selectedGame === "TicTacToe" ? (
                 <TicTacToe />
@@ -70,7 +70,7 @@ const GameGrid: React.FC = () => {
                     {/* Trending Now Section */}
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-900">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {trendingGames.map((game) => (
                                 <GameCard key={game.id} title={game.title} />
                             ))}

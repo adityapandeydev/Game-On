@@ -7,7 +7,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onSidebarToggle }) => {
     return (
-        <header className="flex items-center p-4 bg-gray-800 shadow-md">
+        <header className="flex items-center p-4 bg-gray-800 shadow-md sticky top-0">
             {/* Sidebar Toggle Button */}
             <button
                 className="text-2xl ml-1 mr-4 focus:outline-none"
