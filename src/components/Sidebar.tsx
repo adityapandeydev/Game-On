@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, setSidebarVisible }) => {
     return (
         <div
             className={`${visible ? "hidden" : "w-16"
-            } group sticky top-1 h-screen bg-gray-800 transition-all duration-300`}
+            } group sticky top-1 h-screen bg-gray-800 transition-all duration-300 z-20`}
             onMouseEnter={(e) => e.currentTarget.classList.add("w-48")}
             onMouseLeave={(e) => e.currentTarget.classList.remove("w-48")}
         >

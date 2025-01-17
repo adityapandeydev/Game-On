@@ -7,7 +7,7 @@ const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
   return (
-    <div className="bg-gray-900 text-white">
+    <div className="bg-gray-950 text-white">
       {/* Header */}
       <Header onSidebarToggle={() => setSidebarVisible(!sidebarVisible)} />
 
