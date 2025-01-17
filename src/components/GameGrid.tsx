@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import TicTacToe from './TicTacToe';
-import Connect4 from './Connect4'; // Import Connect4
-import GameCard from './GameCard';
+import React, { useState } from "react";
+import TicTacToe from "./TicTacToe";
+import Connect4 from "./Connect4";
+import GuessMyNumber from "./GuessMyNumber"; // Import Guess My Number component
+import GameCard from "./GameCard";
+import PigGame from "./PigGame";
 
 const GameGrid: React.FC = () => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
@@ -45,6 +47,10 @@ const GameGrid: React.FC = () => {
             setSelectedGame("TicTacToe");
         } else if (gameTitle === "Connect 4") {
             setSelectedGame("Connect4");
+        } else if (gameTitle === "Guess My Number") {
+            setSelectedGame("GuessMyNumber");
+        } else if (gameTitle === "Pig Game") {
+            setSelectedGame("PigGame");
         }
     };
 
@@ -55,6 +61,10 @@ const GameGrid: React.FC = () => {
                 <TicTacToe />
             ) : selectedGame === "Connect4" ? (
                 <Connect4 />
+            ) : selectedGame === "GuessMyNumber" ? (
+                <GuessMyNumber />
+            ) : selectedGame === "PigGame" ? (
+                <PigGame />
             ) : (
                 <>
                     {/* Trending Now Section */}

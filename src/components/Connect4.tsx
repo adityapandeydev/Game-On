@@ -4,7 +4,9 @@ const rows = 6;
 const columns = 7;
 
 const Connect4: React.FC = () => {
-    const [board, setBoard] = useState<string[][]>(Array(rows).fill(Array(columns).fill(" ")));
+    const [board, setBoard] = useState<string[][]>(
+    Array.from({ length: rows }, () => Array(columns).fill(" "))
+);
     const [currentPlayer, setCurrentPlayer] = useState<string>("R");
     const [gameOver, setGameOver] = useState<boolean>(false);
     const [winner, setWinner] = useState<string | null>(null);
