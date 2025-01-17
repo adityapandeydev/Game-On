@@ -50,7 +50,7 @@ const PigGame: React.FC = () => {
 
     return (
         <main className="flex flex-col items-center justify-center h-screen bg-gray-900 text-gray-100">
-            <div className="flex w-full max-w-4xl gap-4">
+            <div className="flex w-full max-w-4xl gap-4 flex-col sm:flex-row">
                 {[0, 1].map((player) => (
                     <div
                         key={player}
@@ -58,17 +58,17 @@ const PigGame: React.FC = () => {
                             } ${!playing && scores[player] >= 20 ? "bg-green-600 text-white" : ""}`}
                         style={{ minWidth: "300px" }} // Ensures player cards stack gracefully
                     >
-                        <h2 className="text-3xl font-bold uppercase">{`Player ${player + 1}`}</h2>
-                        <p className="text-7xl font-bold mt-4">{scores[player]}</p>
+                        <h2 className="text-2xl sm:text-3xl font-bold uppercase">{`Player ${player + 1}`}</h2>
+                        <p className="text-5xl sm:text-7xl font-bold mt-4">{scores[player]}</p>
                         {!playing && scores[player] >= 20 ? (
-                            <p className="mt-6 text-3xl font-bold text-black">🏆 Winner!</p>
+                            <p className="mt-6 text-2xl sm:text-3xl font-bold text-black">🏆 Winner!</p>
                         ) : (
                             <div
-                                className={`mt-6 px-8 py-4 rounded-lg text-white text-center ${activePlayer === player ? "bg-pink-500" : "bg-gray-600"
+                                className={`mt-6 px-6 sm:px-8 py-4 rounded-lg text-white text-center ${activePlayer === player ? "bg-pink-500" : "bg-gray-600"
                                     }`}
                             >
-                                <p className="text-xl font-semibold">Current</p>
-                                <p className="text-4xl font-bold">{activePlayer === player ? currentScore : 0}</p>
+                                <p className="text-lg sm:text-xl font-semibold">Current</p>
+                                <p className="text-3xl sm:text-4xl font-bold">{activePlayer === player ? currentScore : 0}</p>
                             </div>
                         )}
                     </div>
@@ -107,6 +107,7 @@ const PigGame: React.FC = () => {
                 )}
             </div>
         </main>
+
 
     );
 };
