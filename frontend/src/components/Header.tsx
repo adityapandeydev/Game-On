@@ -1,11 +1,18 @@
 import React from "react";
-import viteLogo from "/vite.svg";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
     onSidebarToggle: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onSidebarToggle }) => {
+    const navigate = useNavigate(); // Get the navigate function
+
+    const handleLoginClick = () => {
+        // Navigate to the login page
+        navigate("/login");
+    };
+
     return (
         <header className="flex items-center p-4 bg-gray-800 shadow-md sticky top-0 z-10">
             {/* Sidebar Toggle Button */}
@@ -16,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle }) => {
                 ☰
             </button>
             {/* Logo */}
-            <img src={viteLogo} alt="Site Logo" className="h-8 w-8 mr-2 ml-1" />
+            <img src="/vite.svg" alt="Site Logo" className="h-8 w-8 mr-2 ml-1" />
             {/* Site Name (hidden on mobile) */}
             <h1 className="text-lg font-bold flex-1 hidden sm:block">Game On</h1>
             {/* Search Bar */}
@@ -30,7 +37,10 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle }) => {
                 <button className="p-2 bg-gray-800 rounded hover:bg-gray-700 text-sm sm:text-base">
                     👥 Friends
                 </button>
-                <button className="p-2 bg-blue-600 rounded hover:bg-blue-500 text-sm sm:text-base">
+                <button
+                    onClick={handleLoginClick} // Open the login page when clicked
+                    className="p-2 bg-blue-600 rounded hover:bg-blue-500 text-sm sm:text-base"
+                >
                     Log In
                 </button>
             </div>

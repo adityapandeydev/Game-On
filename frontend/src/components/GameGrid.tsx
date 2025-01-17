@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import TicTacToe from "./TicTacToe";
-import Connect4 from "./Connect4";
-import GuessMyNumber from "./GuessMyNumber"; // Import Guess My Number component
+import { useNavigate } from "react-router-dom";
 import GameCard from "./GameCard";
-import PigGame from "./PigGame";
+// import Login from "./Login"; // Import Login component
 
 const GameGrid: React.FC = () => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
+    const navigate = useNavigate(); // Get the navigate function
 
     const trendingGames = [
         { id: "t1", title: "Game 1" },
@@ -42,15 +42,12 @@ const GameGrid: React.FC = () => {
     ];
 
     const handleCardClick = (gameTitle: string) => {
-        console.log(`Card Clicked: ${gameTitle}`);
-        if (gameTitle === "Tic-Tac-Toe") {
-            setSelectedGame("TicTacToe");
-        } else if (gameTitle === "Connect 4") {
-            setSelectedGame("Connect4");
-        } else if (gameTitle === "Guess My Number") {
-            setSelectedGame("GuessMyNumber");
-        } else if (gameTitle === "Pig Game") {
-            setSelectedGame("PigGame");
+        if (!isLoggedIn) {
+            // If the user is not logged in, route them to the login page
+            navigate("/login");
+        } else {
+            // If logged in, show the selected game
+            setSelectedGame(gameTitle);
         }
     };
 
@@ -58,13 +55,11 @@ const GameGrid: React.FC = () => {
         <div className="p-4">
             {/* Show selected game */}
             {selectedGame === "TicTacToe" ? (
-                <TicTacToe />
+                <div>Tic Tac Toe Game</div>
             ) : selectedGame === "Connect4" ? (
-                <Connect4 />
+                <div>Connect 4 Game</div>
             ) : selectedGame === "GuessMyNumber" ? (
-                <GuessMyNumber />
-            ) : selectedGame === "PigGame" ? (
-                <PigGame />
+                <div>Guess My Number Game</div>
             ) : (
                 <>
                     {/* Trending Now Section */}
