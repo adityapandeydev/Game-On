@@ -50,12 +50,13 @@ const PigGame: React.FC = () => {
 
     return (
         <main className="flex flex-col items-center justify-center h-screen text-gray-900">
-            <div className="flex w-full max-w-4xl gap-4">
+            <div className="flex flex-wrap w-full max-w-4xl gap-4">
                 {[0, 1].map((player) => (
                     <div
                         key={player}
                         className={`flex-1 flex flex-col items-center p-6 rounded-lg ${activePlayer === player ? "bg-white" : "bg-gray-200"
                             } ${!playing && scores[player] >= 100 ? "bg-green-500 text-white" : ""}`}
+                        style={{ minWidth: "300px" }} // Ensures player cards stack gracefully
                     >
                         <h2 className="text-2xl font-bold">{`Player ${player + 1}`}</h2>
                         <p className="text-6xl font-bold mt-2">{scores[player]}</p>
@@ -70,33 +71,31 @@ const PigGame: React.FC = () => {
                 ))}
             </div>
 
-            {/* Gap between player cards and buttons is always uniform */}
             <div className="mt-6 flex flex-col items-center gap-4">
-                {/* Dice roll image will only appear if dice is rolled */}
                 {dice !== null && (
                     <img
                         src={`/dice-${dice}.png`}
                         alt={`Dice ${dice}`}
-                        className="w-16 h-16"
+                        className="w-16 h-16 sm:w-20 sm:h-20" // Scales dice image on larger screens
                     />
                 )}
-                <div className="flex gap-4">
+                <div className="flex flex-wrap justify-center gap-4">
                     <button
                         onClick={rollDice}
-                        className="btn bg-blue-500 text-white px-4 py-2 rounded"
+                        className="btn bg-blue-500 text-white px-4 py-2 rounded sm:px-6 sm:py-3" // Scales buttons on larger screens
                     >
                         🎲 Roll Dice
                     </button>
                     <button
                         onClick={holdScore}
-                        className="btn bg-green-500 text-white px-4 py-2 rounded"
+                        className="btn bg-green-500 text-white px-4 py-2 rounded sm:px-6 sm:py-3"
                     >
                         📥 Hold
                     </button>
                     {!playing && scores[activePlayer] < 100 && (
                         <button
                             onClick={initGame}
-                            className="btn bg-gray-500 text-white px-4 py-2 rounded"
+                            className="btn bg-gray-500 text-white px-4 py-2 rounded sm:px-6 sm:py-3"
                         >
                             🔄 New Game
                         </button>
@@ -104,6 +103,7 @@ const PigGame: React.FC = () => {
                 </div>
             </div>
         </main>
+
     );
 };
 

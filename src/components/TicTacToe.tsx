@@ -49,12 +49,12 @@ const TicTacToe: React.FC = () => {
     };
 
     const botMove = () => {
-        let bestMove = minimax(board, true).index;
+        const bestMove = minimax(board, true).index;
         makeMove(bestMove);
     };
 
     const minimax = (newBoard: string[], isMaximizing: boolean) => {
-        let emptyCells = newBoard
+        const emptyCells = newBoard
             .map((cell, index) => (cell === "" ? index : null))
             .filter((cell) => cell !== null);
 
@@ -66,12 +66,12 @@ const TicTacToe: React.FC = () => {
             return { score: 0, index: -1 };
         }
 
-        let moves: { index: number; score: number }[] = [];
+        const moves: { index: number; score: number }[] = [];
         for (let i of emptyCells) {
-            let move = { index: i, score: 0 };
+            const move = { index: i, score: 0 };
             newBoard[i] = isMaximizing ? "X" : "O";
 
-            let result = minimax(newBoard, !isMaximizing);
+            const result = minimax(newBoard, !isMaximizing);
             move.score = result.score;
 
             newBoard[i] = "";
@@ -114,15 +114,15 @@ const TicTacToe: React.FC = () => {
             {!mode && (
                 <div className="mb-4 flex flex-col items-center">
                     <p className="text-white mb-2">Choose your mode:</p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 justify-center">
                         <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500"
+                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
                             onClick={() => selectMode("vsBot")}
                         >
                             VS Bot
                         </button>
                         <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500"
+                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
                             onClick={() => selectMode("1v1")}
                         >
                             1v1
@@ -133,19 +133,19 @@ const TicTacToe: React.FC = () => {
 
             {mode === "vsBot" && !winner && (
                 <div className="mb-4 flex flex-col items-center">
-                    <p className="text-white mb-2">Do you want to go first?</p>
-                    <div className="flex gap-2">
+                    <p className="text-white mb-2">Who plays first?</p>
+                    <div className="flex flex-wrap gap-2 justify-center">
                         <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500"
+                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
                             onClick={() => startGame(true)}
                         >
-                            Yes
+                            You (O)
                         </button>
                         <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500"
+                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
                             onClick={() => startGame(false)}
                         >
-                            No
+                            Bot (X)
                         </button>
                     </div>
                 </div>
@@ -154,27 +154,29 @@ const TicTacToe: React.FC = () => {
             {mode === "1v1" && !winner && (
                 <div className="mb-4">
                     <p className="text-white mb-2">Player X or Player O?</p>
-                    <button
-                        className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500"
-                        onClick={() => start1v1("X")}
-                    >
-                        Player X
-                    </button>
-                    <button
-                        className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 ml-2"
-                        onClick={() => start1v1("O")}
-                    >
-                        Player O
-                    </button>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        <button
+                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
+                            onClick={() => start1v1("X")}
+                        >
+                            Player X
+                        </button>
+                        <button
+                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
+                            onClick={() => start1v1("O")}
+                        >
+                            Player O
+                        </button>
+                    </div>
                 </div>
             )}
 
             {mode && !winner && (
-                <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="grid grid-cols-3 gap-2 mb-4 sm:gap-4">
                     {board.map((cell, index) => (
                         <div
                             key={index}
-                            className="w-16 h-16 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 border-pink-600 rounded-md cursor-pointer hover:bg-gray-700 transition-all"
+                            className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 border-pink-600 rounded-md cursor-pointer hover:bg-gray-700 transition-all"
                             onClick={() => makeMove(index)}
                         >
                             {cell}
@@ -183,17 +185,16 @@ const TicTacToe: React.FC = () => {
                 </div>
             )}
 
-            {winner && <p className="text-xl font-bold text-green-400 mb-4">{winner}</p>}
+            {winner && <p className="text-xl font-bold text-green-400 mb-4 text-center">{winner}</p>}
 
             {winner && (
                 <button
-                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-500 mt-4"
+                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-500 mt-4 sm:px-4"
                     onClick={resetGame}
                 >
                     New Game
                 </button>
             )}
-
         </div>
     );
 };

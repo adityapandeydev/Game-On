@@ -16,7 +16,7 @@ const App: React.FC = () => {
         <Sidebar setSidebarVisible={setSidebarVisible} visible={sidebarVisible} />
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col bg-gray-900">
           <GameGrid />
         </div>
       </div>
