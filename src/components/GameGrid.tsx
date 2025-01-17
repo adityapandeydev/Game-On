@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import GameCard from "./GameCard";
-import TicTacToe from "./TicTacToe";
+import React, { useState } from 'react';
+import TicTacToe from './TicTacToe';
+import Connect4 from './Connect4'; // Import Connect4
+import GameCard from './GameCard';
 
 const GameGrid: React.FC = () => {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
-    // Define trending games and genres
     const trendingGames = [
         { id: "t1", title: "Game 1" },
         { id: "t2", title: "Game 2" },
@@ -40,16 +40,21 @@ const GameGrid: React.FC = () => {
     ];
 
     const handleCardClick = (gameTitle: string) => {
+        console.log(`Card Clicked: ${gameTitle}`);
         if (gameTitle === "Tic-Tac-Toe") {
             setSelectedGame("TicTacToe");
+        } else if (gameTitle === "Connect 4") {
+            setSelectedGame("Connect4");
         }
     };
 
     return (
         <div className="p-4">
-            {/* Show Tic Tac Toe game if selected */}
+            {/* Show selected game */}
             {selectedGame === "TicTacToe" ? (
                 <TicTacToe />
+            ) : selectedGame === "Connect4" ? (
+                <Connect4 />
             ) : (
                 <>
                     {/* Trending Now Section */}
@@ -57,13 +62,7 @@ const GameGrid: React.FC = () => {
                         <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
                         <div className="grid grid-cols-3 gap-4">
                             {trendingGames.map((game) => (
-                                <div
-                                    key={game.id}
-                                    className="cursor-pointer"
-                                    onClick={() => handleCardClick(game.title)}
-                                >
-                                    <GameCard title={game.title} />
-                                </div>
+                                <GameCard key={game.id} title={game.title} />
                             ))}
                         </div>
                     </div>
