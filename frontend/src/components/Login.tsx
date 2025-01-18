@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from 'axios';
 
 interface LoginProps {
@@ -7,29 +7,27 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(''); // Clear previous errors
-
+        setError('');
+    
         try {
-            // Send login request to the backend
             const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
             const { token } = response.data;
-
-            // Store the token in localStorage or sessionStorage
+    
             localStorage.setItem('token', token);
-
-            // Set login state in parent component (App)
-            onLogin();
+            onLogin(); // Notify App about login
+            navigate("/"); // Redirect to GameGrid
         } catch (error: unknown) {
             setError('Invalid email or password');
-            console.log(error)
+            console.log(error);
         }
-    };
+    };    
 
     return (
         <div className="flex justify-center items-center h-full">

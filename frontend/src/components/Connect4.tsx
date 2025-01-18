@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 const rows = 6;
 const columns = 7;
@@ -11,10 +11,15 @@ const Connect4: React.FC = () => {
     const [gameOver, setGameOver] = useState<boolean>(false);
     const [winner, setWinner] = useState<string | null>(null);
 
-    // This useEffect is added to log and check the board on state change
-    useEffect(() => {
-        console.log("Board State Updated: ", board);
-    }, [board]);
+    const generateCellId = (row: number, col: number): string => {
+        return `cell-${row}-${col}`;
+    };
+
+    const getCellStyle = (cell: string): string => {
+        if (cell === "R") return "bg-red-600 border-red-700";
+        if (cell === "Y") return "bg-yellow-500 border-yellow-600";
+        return "bg-gray-700 border-gray-600 hover:bg-gray-600";
+    };
 
     const dropPiece = (col: number) => {
         if (gameOver) return;
@@ -38,99 +43,95 @@ const Connect4: React.FC = () => {
         }
     };
 
-    const checkWinner = (row: number, col: number): boolean => {
-        // Horizontal
+    const checkLine = (startRow: number, startCol: number, deltaRow: number, deltaCol: number): boolean => {
+        let count = 0;
+        for (let i = 0; i < 4; i++) {
+            const row = startRow + deltaRow * i;
+            const col = startCol + deltaCol * i;
+            if (row >= 0 && row < rows && col >= 0 && col < columns && 
+                board[row][col] === currentPlayer) {
+                count++;
+            }
+        }
+        return count === 4;
+    };
+
+    const checkHorizontal = (row: number, col: number): boolean => {
         for (let c = Math.max(0, col - 3); c <= Math.min(columns - 4, col); c++) {
-            if (
-                board[row][c] === currentPlayer &&
-                board[row][c + 1] === currentPlayer &&
-                board[row][c + 2] === currentPlayer &&
-                board[row][c + 3] === currentPlayer
-            ) {
-                return true;
-            }
+            if (checkLine(row, c, 0, 1)) return true;
         }
-
-        // Vertical
-        for (let r = Math.max(0, row - 3); r <= Math.min(rows - 4, row); r++) {
-            if (
-                board[r][col] === currentPlayer &&
-                board[r + 1][col] === currentPlayer &&
-                board[r + 2][col] === currentPlayer &&
-                board[r + 3][col] === currentPlayer
-            ) {
-                return true;
-            }
-        }
-
-        // Diagonal (bottom-left to top-right)
-        for (let r = Math.max(0, row - 3); r <= Math.min(rows - 4, row); r++) {
-            for (let c = Math.max(0, col - 3); c <= Math.min(columns - 4, col); c++) {
-                if (
-                    board[r][c] === currentPlayer &&
-                    board[r + 1][c + 1] === currentPlayer &&
-                    board[r + 2][c + 2] === currentPlayer &&
-                    board[r + 3][c + 3] === currentPlayer
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        // Diagonal (top-left to bottom-right)
-        for (let r = Math.max(3, row); r < rows; r++) {
-            for (let c = Math.max(0, col - 3); c <= Math.min(columns - 4, col); c++) {
-                if (
-                    board[r][c] === currentPlayer &&
-                    board[r - 1][c + 1] === currentPlayer &&
-                    board[r - 2][c + 2] === currentPlayer &&
-                    board[r - 3][c + 3] === currentPlayer
-                ) {
-                    return true;
-                }
-            }
-        }
-
         return false;
     };
 
-    const renderBoard = () => {
-        return (
-            <div className="flex flex-col items-center mt-4">
-                {board.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex justify-center">
-                        {row.map((cell, colIndex) => (
-                            <div
-                                key={colIndex}
-                                className={`w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 m-0.5 xs:m-1 rounded-full border-4 cursor-pointer transition-all ${
-                                    cell === "R" ? "bg-red-600" : cell === "Y" ? "bg-yellow-500" : "bg-white"
-                                } hover:bg-opacity-80`}
-                                onClick={() => dropPiece(colIndex)}
-                            />
-                        ))}
-                    </div>
-                ))}
-            </div>
-        );
+    const checkVertical = (row: number, col: number): boolean => {
+        for (let r = Math.max(0, row - 3); r <= Math.min(rows - 4, row); r++) {
+            if (checkLine(r, col, 1, 0)) return true;
+        }
+        return false;
+    };
+
+    const checkDiagonals = (row: number, col: number): boolean => {
+        // Check diagonal \
+        for (let r = Math.max(0, row - 3); r <= Math.min(rows - 4, row); r++) {
+            for (let c = Math.max(0, col - 3); c <= Math.min(columns - 4, col); c++) {
+                if (checkLine(r, c, 1, 1)) return true;
+            }
+        }
+        // Check diagonal /
+        for (let r = Math.max(3, row); r < rows; r++) {
+            for (let c = Math.max(0, col - 3); c <= Math.min(columns - 4, col); c++) {
+                if (checkLine(r, c, -1, 1)) return true;
+            }
+        }
+        return false;
+    };
+
+    const checkWinner = (row: number, col: number): boolean => {
+        return checkHorizontal(row, col) || 
+               checkVertical(row, col) || 
+               checkDiagonals(row, col);
     };
 
     return (
-        <div className="flex flex-col items-center p-3 xs:p-4 bg-gray-800 rounded-lg shadow-xl w-full max-w-full xs:max-w-full sm:max-w-full">
-            <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-white mb-3 xs:mb-4">Connect 4</h2>
-            {winner ? (
-                <h3 className="text-lg xs:text-xl sm:text-2xl text-green-500 mb-3 xs:mb-4">{winner} Wins!</h3>
-            ) : (
-                <h3 className="ext-base xs:text-lg sm:text-xl text-white mb-3 xs:mb-4">{currentPlayer === "R" ? "Red's" : "Yellow's"} turn</h3>
-            )}
-            {renderBoard()}
-            {gameOver && (
-                <button
-                    className="mt-3 xs:mt-4 p-1 xs:p-2 sm:px-4 sm:py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-                    onClick={() => window.location.reload()}
-                >
-                    Play Again
-                </button>
-            )}
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                <h2 className="text-3xl font-bold text-white mb-6">Connect 4</h2>
+
+                {winner ? (
+                    <h3 className="text-xl font-bold text-green-400 mb-6">{winner} Wins!</h3>
+                ) : (
+                    <h3 className="text-xl text-gray-300 mb-6">
+                        {currentPlayer === "R" ? "Red's" : "Yellow's"} turn
+                    </h3>
+                )}
+
+                <div className="bg-gray-900 p-4 rounded-lg mb-6">
+                    {board.map((row, rowIndex) => (
+                        <div key={generateCellId(rowIndex, -1)} className="flex justify-center">
+                            {row.map((cell, colIndex) => (
+                                <button
+                                    key={generateCellId(rowIndex, colIndex)}
+                                    className={`
+                                        w-12 h-12 sm:w-16 sm:h-16 m-1 rounded-full border-4
+                                        transition-all duration-200 ${getCellStyle(cell)}
+                                    `}
+                                    onClick={() => dropPiece(colIndex)}
+                                    aria-label={`Column ${colIndex + 1}`}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+
+                {gameOver && (
+                    <button
+                        className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                        onClick={() => window.location.reload()}
+                    >
+                        Play Again
+                    </button>
+                )}
+            </div>
         </div>
     );
 };

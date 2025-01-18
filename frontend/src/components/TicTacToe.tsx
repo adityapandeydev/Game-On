@@ -1,34 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 const TicTacToe: React.FC = () => {
     const [board, setBoard] = useState<string[]>(["", "", "", "", "", "", "", "", ""]);
     const [currentPlayer, setCurrentPlayer] = useState<string>("O");
-    const [mode, setMode] = useState<string>(""); // "vsBot" or "1v1"
+    const [mode, setMode] = useState<string>("");
     const [winner, setWinner] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (mode === "vsBot" && currentPlayer === "X" && !winner) {
-            botMove();
+    const checkWinner = useCallback((boardState: string[], mark: string): boolean => {
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6],
+        ];
+        return winPatterns.some((pattern) => pattern.every((index) => boardState[index] === mark));
+    }, []);
+
+    const minimax = useCallback((newBoard: string[], isMaximizing: boolean) => {
+        const emptyCells = newBoard
+            .map((cell, index) => (cell === "" ? index : null))
+            .filter((cell): cell is number => cell !== null);
+
+        if (checkWinner(newBoard, "X")) {
+            return { score: 10, index: -1 };
+        } else if (checkWinner(newBoard, "O")) {
+            return { score: -10, index: -1 };
+        } else if (emptyCells.length === 0) {
+            return { score: 0, index: -1 };
         }
-    }, [currentPlayer, mode, winner]);
 
-    const selectMode = (selectedMode: string) => {
-        setMode(selectedMode);
-        setBoard(["", "", "", "", "", "", "", "", ""]);
-        setWinner(null);
-    };
+        const moves: { index: number; score: number }[] = [];
+        for (const i of emptyCells) {
+            const move = { index: i, score: 0 };
+            newBoard[i] = isMaximizing ? "X" : "O";
+            const result = minimax(newBoard, !isMaximizing);
+            move.score = result.score;
+            newBoard[i] = "";
+            moves.push(move);
+        }
 
-    const startGame = (playerGoesFirst: boolean) => {
-        setCurrentPlayer(playerGoesFirst ? "O" : "X");
-        setWinner(null);
-    };
+        return isMaximizing
+            ? moves.reduce((best, move) => (move.score > best.score ? move : best), { score: -Infinity, index: -1 })
+            : moves.reduce((best, move) => (move.score < best.score ? move : best), { score: Infinity, index: -1 });
+    }, [checkWinner]);
 
-    const start1v1 = (playerSelected: string) => {
-        setCurrentPlayer(playerSelected);
-        setWinner(null);
-    };
-
-    const makeMove = (position: number) => {
+    const makeMove = useCallback((position: number) => {
         if (board[position] !== "" || winner) return;
 
         const newBoard = [...board];
@@ -46,58 +61,35 @@ const TicTacToe: React.FC = () => {
         }
 
         setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
-    };
+    }, [board, currentPlayer, winner, checkWinner]);
 
-    const botMove = () => {
+    const botMove = useCallback(() => {
         const bestMove = minimax(board, true).index;
-        makeMove(bestMove);
+        if (bestMove !== -1) {
+            makeMove(bestMove);
+        }
+    }, [board, minimax, makeMove]);
+
+    useEffect(() => {
+        if (mode === "vsBot" && currentPlayer === "X" && !winner) {
+            botMove();
+        }
+    }, [currentPlayer, mode, winner, botMove]);
+
+    const selectMode = (selectedMode: string) => {
+        setMode(selectedMode);
+        setBoard(["", "", "", "", "", "", "", "", ""]);
+        setWinner(null);
     };
 
-    const minimax = (newBoard: string[], isMaximizing: boolean) => {
-        const emptyCells = newBoard
-            .map((cell, index) => (cell === "" ? index : null))
-            .filter((cell) => cell !== null);
-
-        if (checkWinner(newBoard, "X")) {
-            return { score: 10, index: -1 };
-        } else if (checkWinner(newBoard, "O")) {
-            return { score: -10, index: -1 };
-        } else if (emptyCells.length === 0) {
-            return { score: 0, index: -1 };
-        }
-
-        const moves: { index: number; score: number }[] = [];
-        for (let i of emptyCells) {
-            const move = { index: i, score: 0 };
-            newBoard[i] = isMaximizing ? "X" : "O";
-
-            const result = minimax(newBoard, !isMaximizing);
-            move.score = result.score;
-
-            newBoard[i] = "";
-            moves.push(move);
-        }
-
-        if (isMaximizing) {
-            return moves.reduce((best, move) => (move.score > best.score ? move : best), { score: -Infinity, index: -1 });
-        } else {
-            return moves.reduce((best, move) => (move.score < best.score ? move : best), { score: Infinity, index: -1 });
-        }
+    const startGame = (playerGoesFirst: boolean) => {
+        setCurrentPlayer(playerGoesFirst ? "O" : "X");
+        setWinner(null);
     };
 
-    const checkWinner = (boardState: string[], mark: string): boolean => {
-        const winPatterns = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6],
-        ];
-
-        return winPatterns.some((pattern) => pattern.every((index) => boardState[index] === mark));
+    const start1v1 = (playerSelected: string) => {
+        setCurrentPlayer(playerSelected);
+        setWinner(null);
     };
 
     const resetGame = () => {
@@ -108,93 +100,100 @@ const TicTacToe: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col items-center p-4 bg-gray-800 rounded-lg shadow-xl">
-            <h2 className="text-3xl font-bold text-white mb-4">Tic Tac Toe</h2>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                <h2 className="text-3xl font-bold text-white mb-6">Tic Tac Toe</h2>
 
-            {!mode && (
-                <div className="mb-4 flex flex-col items-center">
-                    <p className="text-white mb-2">Choose your mode:</p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                        <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
-                            onClick={() => selectMode("vsBot")}
-                        >
-                            VS Bot
-                        </button>
-                        <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
-                            onClick={() => selectMode("1v1")}
-                        >
-                            1v1
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {mode === "vsBot" && !winner && (
-                <div className="mb-4 flex flex-col items-center">
-                    <p className="text-white mb-2">Who plays first?</p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                        <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
-                            onClick={() => startGame(true)}
-                        >
-                            You (O)
-                        </button>
-                        <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
-                            onClick={() => startGame(false)}
-                        >
-                            Bot (X)
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {mode === "1v1" && !winner && (
-                <div className="mb-4">
-                    <p className="text-white mb-2">Player X or Player O?</p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                        <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
-                            onClick={() => start1v1("X")}
-                        >
-                            Player X
-                        </button>
-                        <button
-                            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-500 sm:px-4"
-                            onClick={() => start1v1("O")}
-                        >
-                            Player O
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {mode && !winner && (
-                <div className="grid grid-cols-3 gap-2 mb-4 sm:gap-4">
-                    {board.map((cell, index) => (
-                        <div
-                            key={index}
-                            className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 border-pink-600 rounded-md cursor-pointer hover:bg-gray-700 transition-all"
-                            onClick={() => makeMove(index)}
-                        >
-                            {cell}
+                {!mode && (
+                    <div className="mb-6 flex flex-col items-center">
+                        <p className="text-lg text-gray-300 mb-4">Choose your mode:</p>
+                        <div className="flex gap-4">
+                            <button
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                onClick={() => selectMode("vsBot")}
+                            >
+                                VS Bot
+                            </button>
+                            <button
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                onClick={() => selectMode("1v1")}
+                            >
+                                1v1
+                            </button>
                         </div>
-                    ))}
-                </div>
-            )}
+                    </div>
+                )}
 
-            {winner && <p className="text-xl font-bold text-green-400 mb-4 text-center">{winner}</p>}
+                {mode === "vsBot" && !winner && board.every(cell => cell === "") && (
+                    <div className="mb-6 flex flex-col items-center">
+                        <p className="text-lg text-gray-300 mb-4">Who plays first?</p>
+                        <div className="flex gap-4">
+                            <button
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                onClick={() => startGame(true)}
+                            >
+                                You (O)
+                            </button>
+                            <button
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                onClick={() => startGame(false)}
+                            >
+                                Bot (X)
+                            </button>
+                        </div>
+                    </div>
+                )}
 
-            {winner && (
-                <button
-                    className="p-2 bg-pink-600 text-white rounded hover:bg-pink-500 mt-4 sm:px-4"
-                    onClick={resetGame}
-                >
-                    New Game
-                </button>
-            )}
+                {mode === "1v1" && !winner && board.every(cell => cell === "") && (
+                    <div className="mb-6 flex flex-col items-center">
+                        <p className="text-lg text-gray-300 mb-4">Choose your mark:</p>
+                        <div className="flex gap-4">
+                            <button
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                onClick={() => start1v1("X")}
+                            >
+                                Player X
+                            </button>
+                            <button
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                onClick={() => start1v1("O")}
+                            >
+                                Player O
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {mode && !winner && (
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                        {board.map((cell, index) => (
+                            <button
+                                key={`cell-${Math.floor(index/3)}-${index%3}`}
+                                className={`w-20 h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 ${
+                                    cell ? 'border-purple-600' : 'border-gray-700'
+                                } rounded-lg hover:bg-gray-800 transition-colors`}
+                                onClick={() => makeMove(index)}
+                                disabled={!!cell || !!winner}
+                                aria-label={`Cell ${index + 1}`}
+                            >
+                                {cell}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {winner && (
+                    <div className="text-center">
+                        <p className="text-xl font-bold text-green-400 mb-4">{winner}</p>
+                        <button
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                            onClick={resetGame}
+                        >
+                            Play Again
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import GameCard from "./GameCard";
 
@@ -7,7 +7,6 @@ interface GameGridProps {
 }
 
 const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
-    const [selectedGame, setSelectedGame] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const trendingGames = [
@@ -43,51 +42,65 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
         },
     ];
 
+    const navigateToLogin = () => {
+        navigate("/login");
+    };
+
+    const navigateToGame = (gameTitle: string) => {
+        switch (gameTitle) {
+            case "Tic-Tac-Toe":
+                navigate("/tictactoe");
+                break;
+            case "Connect 4":
+                navigate("/connect4");
+                break;
+            case "Guess My Number":
+                navigate("/guess-number");
+                break;
+            case "Pig Game":
+                navigate("/pig-game");
+                break;
+            default:
+                console.log(`${gameTitle} not yet implemented`);
+        }
+    };
+
     const handleCardClick = (gameTitle: string) => {
         if (!isLoggedIn) {
-            navigate("/login");
-        } else {
-            setSelectedGame(gameTitle);
+            navigateToLogin();
+            return;
         }
+        navigateToGame(gameTitle);
     };
 
     return (
         <div className="p-4">
-            {selectedGame === "TicTacToe" ? (
-                <div>Tic Tac Toe Game</div>
-            ) : selectedGame === "Connect4" ? (
-                <div>Connect 4 Game</div>
-            ) : selectedGame === "GuessMyNumber" ? (
-                <div>Guess My Number Game</div>
-            ) : (
-                <>
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {trendingGames.map((game) => (
-                                <GameCard key={game.id} title={game.title} />
-                            ))}
-                        </div>
-                    </div>
-
-                    {genres.map((genre) => (
-                        <div key={genre.name} className="mb-8">
-                            <h2 className="text-2xl font-bold mb-4">{genre.name}</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {genre.games.map((game) => (
-                                    <div
-                                        key={game.id}
-                                        className="cursor-pointer"
-                                        onClick={() => handleCardClick(game.title)}
-                                    >
-                                        <GameCard title={game.title} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+            <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {trendingGames.map((game) => (
+                        <GameCard key={game.id} title={game.title} />
                     ))}
-                </>
-            )}
+                </div>
+            </div>
+
+            {genres.map((genre) => (
+                <div key={genre.name} className="mb-8">
+                    <h2 className="text-2xl font-bold mb-4">{genre.name}</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {genre.games.map((game) => (
+                            <button
+                                key={game.id}
+                                className="w-full text-left bg-transparent border-0 p-0 m-0 cursor-pointer"
+                                onClick={() => handleCardClick(game.title)}
+                                aria-label={`Play ${game.title}`}
+                            >
+                                <GameCard title={game.title} />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };

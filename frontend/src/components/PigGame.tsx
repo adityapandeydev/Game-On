@@ -49,66 +49,77 @@ const PigGame: React.FC = () => {
     };
 
     return (
-        <main className="flex flex-col items-center justify-center h-screen bg-gray-900 text-gray-100">
-            <div className="flex w-full max-w-4xl gap-4 flex-col sm:flex-row">
-                {[0, 1].map((player) => (
-                    <div
-                        key={player}
-                        className={`flex-1 flex flex-col items-center p-6 rounded-lg ${activePlayer === player ? "bg-gray-800" : "bg-gray-700"
-                            } ${!playing && scores[player] >= 20 ? "bg-green-600 text-white" : ""}`}
-                        style={{ minWidth: "300px" }} // Ensures player cards stack gracefully
-                    >
-                        <h2 className="text-2xl sm:text-3xl font-bold uppercase">{`Player ${player + 1}`}</h2>
-                        <p className="text-5xl sm:text-7xl font-bold mt-4">{scores[player]}</p>
-                        {!playing && scores[player] >= 20 ? (
-                            <p className="mt-6 text-2xl sm:text-3xl font-bold text-black">🏆 Winner!</p>
-                        ) : (
-                            <div
-                                className={`mt-6 px-6 sm:px-8 py-4 rounded-lg text-white text-center ${activePlayer === player ? "bg-pink-500" : "bg-gray-600"
-                                    }`}
-                            >
-                                <p className="text-lg sm:text-xl font-semibold">Current</p>
-                                <p className="text-3xl sm:text-4xl font-bold">{activePlayer === player ? currentScore : 0}</p>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                <h2 className="text-3xl font-bold text-white mb-6">Pig Game</h2>
 
-            <div className="mt-12 flex flex-col items-center gap-6">
-                {dice !== null && (
-                    <img
-                        src={`/dice-${dice}.png`}
-                        alt={`Dice ${dice}`}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg"
-                    />
-                )}
-                <div className="flex justify-center gap-4">
-                    <button
-                        onClick={rollDice}
-                        className="bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 transition"
-                    >
-                        🎲 Roll Dice
-                    </button>
-                    <button
-                        onClick={holdScore}
-                        className="bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 transition"
-                    >
-                        📥 Hold
-                    </button>
+                <div className="flex flex-col sm:flex-row gap-6 w-full mb-8">
+                    {[0, 1].map((player) => (
+                        <div
+                            key={`player-${player}`}
+                            className={`flex-1 flex flex-col items-center p-6 rounded-lg ${
+                                activePlayer === player ? "bg-gray-700" : "bg-gray-900"
+                            } ${!playing && scores[player] >= 20 ? "bg-green-600" : ""}`}
+                        >
+                            <h3 className="text-2xl font-bold text-white mb-4">
+                                Player {player + 1}
+                            </h3>
+                            <p className="text-4xl font-bold text-white mb-6">
+                                {scores[player]}
+                            </p>
+                            {!playing && scores[player] >= 20 ? (
+                                <p className="text-xl font-bold text-white">🏆 Winner!</p>
+                            ) : (
+                                <div className={`p-4 rounded-lg ${
+                                    activePlayer === player ? "bg-purple-600" : "bg-gray-700"
+                                }`}>
+                                    <p className="text-lg text-white mb-2">Current</p>
+                                    <p className="text-3xl font-bold text-white">
+                                        {activePlayer === player ? currentScore : 0}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-                {!playing && (
-                    <button
-                        onClick={initGame}
-                        className="mt-6 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 transition"
-                    >
-                        🔄 New Game
-                    </button>
-                )}
+
+                <div className="flex flex-col items-center gap-6">
+                    {dice !== null && (
+                        <img
+                            src={`/dice-${dice}.png`}
+                            alt={`Dice ${dice}`}
+                            className="w-20 h-20 rounded-lg bg-gray-900 p-2"
+                        />
+                    )}
+
+                    <div className="flex gap-4">
+                        <button
+                            onClick={rollDice}
+                            disabled={!playing}
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors disabled:opacity-50"
+                        >
+                            🎲 Roll Dice
+                        </button>
+                        <button
+                            onClick={holdScore}
+                            disabled={!playing}
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors disabled:opacity-50"
+                        >
+                            📥 Hold
+                        </button>
+                    </div>
+
+                    {!playing && (
+                        <button
+                            onClick={initGame}
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                        >
+                            Play Again
+                        </button>
+                    )}
+                </div>
             </div>
-        </main>
-
-
+        </div>
     );
 };
 
