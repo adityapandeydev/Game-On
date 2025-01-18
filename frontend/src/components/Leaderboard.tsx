@@ -17,6 +17,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, refreshTrigger }) => 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const gameNames: { [key: string]: string } = {
+        'typingtest': 'TypeStorm',
+        'mathquiz': 'Quantum Guess',
+        'capitalcities': 'Geo Quest',
+        'mathchallenge': 'Math Challenge',
+        // ... other games
+    };
+
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import GameCard from "./GameCard";
 
 interface GameGridProps {
-    isLoggedIn: boolean; // Declare the prop here
+    isLoggedIn: boolean;
 }
 
 const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
@@ -20,7 +20,7 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
             name: "Puzzle",
             games: [
                 { id: 1, title: "Tic-Tac-Toe" },
-                { id: 2, title: "2048" },
+                { id: 2, title: "Tetris" },
                 { id: 3, title: "Sliding Puzzle" },
             ],
         },
@@ -35,9 +35,10 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
         {
             name: "Education",
             games: [
-                { id: 7, title: "Guess My Number 2" },
-                { id: 8, title: "Math Quiz" },
-                { id: 9, title: "Guess the Country" },
+                { id: 7, title: "Quantum Guess" },
+                { id: 8, title: "Geo Quest" },
+                { id: 9, title: "TypeStorm" },
+                { id: 10, title: "Math Challenge" },
             ],
         },
     ];
@@ -59,6 +60,24 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
                 break;
             case "Pig Game":
                 navigate("/pig-game");
+                break;
+            case "Quantum Guess":
+                navigate("/math-quiz");
+                break;
+            case "Geo Quest":
+                navigate("/capital-cities");
+                break;
+            case "TypeStorm":
+                navigate("/typing-test");
+                break;
+            case "Math Challenge":
+                navigate("/math-challenge");
+                break;
+            case "Sliding Puzzle":
+                navigate("/sliding-puzzle");
+                break;
+            case "Tetris":
+                navigate("/tetris");
                 break;
             default:
                 console.log(`${gameTitle} not yet implemented`);
