@@ -1,11 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { ScoreService } from "../services/ScoreService";
+import Leaderboard from './Leaderboard';
 
-const PigGame: React.FC = () => {
+interface PigGameProps {
+    userId?: string;
+}
+
+const PigGame: React.FC<PigGameProps> = ({ userId }) => {
     const [scores, setScores] = useState([0, 0]);
     const [currentScore, setCurrentScore] = useState(0);
     const [activePlayer, setActivePlayer] = useState(0);
     const [playing, setPlaying] = useState(true);
     const [dice, setDice] = useState<number | null>(null);
+    const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
+
+    const handleGameEnd = useCallback(async () => {
+        if (!userId) return;
+        
+        if (activePlayer === 0 && scores[0] === 20) {
+            try {
+                await ScoreService.saveScore('piggame', userId, 'win');
+                setRefreshLeaderboard(prev => prev + 1);
+            } catch (error) {
+                console.error('Failed to save score:', error);
+            }
+        } else {
+            await ScoreService.saveScore('piggame', userId, 'lose');
+            setRefreshLeaderboard(prev => prev + 1);
+        }
+    }, [userId, activePlayer, scores]);
 
     const initGame = () => {
         setScores([0, 0]);
@@ -13,6 +36,7 @@ const PigGame: React.FC = () => {
         setActivePlayer(0);
         setPlaying(true);
         setDice(null);
+        setRefreshLeaderboard(prev => prev + 1);
     };
 
     const switchPlayer = () => {
@@ -28,6 +52,9 @@ const PigGame: React.FC = () => {
             if (diceRoll !== 1) {
                 setCurrentScore((prevScore) => prevScore + diceRoll);
             } else {
+                if (currentScore === 0) {
+                    handleGameEnd();
+                }
                 switchPlayer();
             }
         }
@@ -42,6 +69,7 @@ const PigGame: React.FC = () => {
             if (newScores[activePlayer] >= 20) {
                 setPlaying(false);
                 setDice(null);
+                handleGameEnd();
             } else {
                 switchPlayer();
             }
@@ -119,6 +147,8 @@ const PigGame: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            <Leaderboard gameId="piggame" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

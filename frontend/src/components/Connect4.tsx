@@ -1,15 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { ScoreService } from "../services/ScoreService";
+import { GameResult } from "../types/game";
+import Leaderboard from './Leaderboard';
+
+interface Connect4Props {
+    userId?: string;
+}
 
 const rows = 6;
 const columns = 7;
 
-const Connect4: React.FC = () => {
+const Connect4: React.FC<Connect4Props> = ({ userId }) => {
     const [board, setBoard] = useState<string[][]>(
         Array.from({ length: rows }, () => Array(columns).fill(" "))
     );
     const [currentPlayer, setCurrentPlayer] = useState<string>("R");
     const [gameOver, setGameOver] = useState<boolean>(false);
     const [winner, setWinner] = useState<string | null>(null);
+    const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
 
     const generateCellId = (row: number, col: number): string => {
         return `cell-${row}-${col}`;
@@ -37,6 +45,10 @@ const Connect4: React.FC = () => {
         if (checkWinner(nextRow, col)) {
             setWinner(currentPlayer === "R" ? "Red" : "Yellow");
             setGameOver(true);
+            handleGameEnd('win');
+        } else if (board.every(row => row.every(cell => cell !== " "))) {
+            setGameOver(true);
+            handleGameEnd('draw');
         } else {
             // Switch players
             setCurrentPlayer(currentPlayer === "R" ? "Y" : "R");
@@ -92,6 +104,17 @@ const Connect4: React.FC = () => {
                checkDiagonals(row, col);
     };
 
+    const handleGameEnd = useCallback(async (result: GameResult) => {
+        if (!userId) return;
+        
+        try {
+            await ScoreService.saveScore('connect4', userId, result);
+            setRefreshLeaderboard(prev => prev + 1);
+        } catch (error) {
+            console.error('Failed to save score:', error);
+        }
+    }, [userId]);
+
     return (
         <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
@@ -132,6 +155,8 @@ const Connect4: React.FC = () => {
                     </button>
                 )}
             </div>
+
+            <Leaderboard gameId="connect4" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

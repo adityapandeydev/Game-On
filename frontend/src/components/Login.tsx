@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from 'axios';
 
 interface LoginProps {
     onLogin: () => void;
@@ -10,24 +9,54 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState('');
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-    
+        
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-            const { token } = response.data;
-    
-            localStorage.setItem('token', token);
-            onLogin(); // Notify App about login
-            navigate("/"); // Redirect to GameGrid
-        } catch (error: unknown) {
-            setError('Invalid email or password');
-            console.log(error);
+            console.log('Sending login request for:', email);
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+            console.log('Raw server response:', JSON.stringify(data, null, 2));
+            
+            if (!response.ok) {
+                throw new Error(data.msg || 'Login failed');
+            }
+
+            // Validate response data structure
+            if (!data.token) {
+                console.error('Missing token in response');
+                throw new Error('Invalid server response: missing token');
+            }
+            if (!data.user) {
+                console.error('Missing user data in response. Full response:', data);
+                throw new Error('Invalid server response: missing user data');
+            }
+            if (!data.user.id || !data.user.name || !data.user.email) {
+                console.error('Incomplete user data:', data.user);
+                throw new Error('Invalid server response: incomplete user data');
+            }
+
+            // Store token and user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            onLogin();
+            navigate('/', { replace: true });
+        } catch (err) {
+            console.error('Login error:', err);
+            setError(err instanceof Error ? err.message : 'Login failed');
         }
-    };    
+    };
 
     return (
         <div className="flex justify-center items-center h-full">

@@ -1,4 +1,7 @@
 import React, { useState, useCallback } from "react";
+import { ScoreService } from "../services/ScoreService";
+import { GameResult } from "../types/game";
+import Leaderboard from './Leaderboard';
 
 interface Difficulty {
     label: string;
@@ -12,7 +15,11 @@ const difficulties: Difficulty[] = [
     { label: "Hard", range: 100, mistakeInterval: 5 },
 ];
 
-const GuessMyNumber: React.FC = () => {
+interface GuessMyNumberProps {
+    userId?: string;
+}
+
+const GuessMyNumber: React.FC<GuessMyNumberProps> = ({ userId }) => {
     const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
     const [number, setNumber] = useState<number | null>(null);
     const [score, setScore] = useState<number>(20);
@@ -20,6 +27,7 @@ const GuessMyNumber: React.FC = () => {
     const [message, setMessage] = useState<string>("Start guessing...");
     const [guess, setGuess] = useState<string>("");
     const [attempts, setAttempts] = useState<number>(0);
+    const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
 
     const getHint = useCallback((guessNumber: number, currentDifficulty: Difficulty, targetNumber: number): string => {
         const difference = Math.abs(guessNumber - targetNumber);
@@ -49,6 +57,17 @@ const GuessMyNumber: React.FC = () => {
         setMessage("Start guessing...");
     }, []);
 
+    const handleGameEnd = useCallback(async (result: GameResult) => {
+        if (!userId) return;
+        
+        try {
+            await ScoreService.saveScore('guessmynumber', userId, result);
+            setRefreshLeaderboard(prev => prev + 1);
+        } catch (error) {
+            console.error('Failed to save score:', error);
+        }
+    }, [userId]);
+
     const handleCheck = useCallback(() => {
         if (!difficulty || !number) return;
 
@@ -65,6 +84,7 @@ const GuessMyNumber: React.FC = () => {
             if (score > highScore) {
                 setHighScore(score);
             }
+            handleGameEnd('win');
             return;
         }
 
@@ -76,8 +96,9 @@ const GuessMyNumber: React.FC = () => {
         } else if (score === 1) {
             setScore(0);
             setMessage("😂 You Lost!");
+            handleGameEnd('lose');
         }
-    }, [difficulty, number, guess, attempts, score, highScore, getHint]);
+    }, [difficulty, number, guess, attempts, score, highScore, getHint, handleGameEnd]);
 
     const handleAgain = useCallback(() => {
         if (!difficulty) return;
@@ -87,6 +108,7 @@ const GuessMyNumber: React.FC = () => {
         setNumber(Math.trunc(Math.random() * difficulty.range) + 1);
         setMessage("Start guessing...");
         setGuess("");
+        setRefreshLeaderboard(prev => prev + 1);
     }, [difficulty]);
 
     return (
@@ -156,6 +178,8 @@ const GuessMyNumber: React.FC = () => {
                     </>
                 )}
             </div>
+            
+            <Leaderboard gameId="guessmynumber" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

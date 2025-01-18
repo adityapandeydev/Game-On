@@ -1,10 +1,28 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { ScoreService } from "../services/ScoreService";
+import { GameResult } from "../types/game";
+import Leaderboard from './Leaderboard';
 
-const TicTacToe: React.FC = () => {
+interface TicTacToeProps {
+    userId?: string;
+}
+
+const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
     const [board, setBoard] = useState<string[]>(["", "", "", "", "", "", "", "", ""]);
     const [currentPlayer, setCurrentPlayer] = useState<string>("O");
     const [mode, setMode] = useState<string>("");
     const [winner, setWinner] = useState<string | null>(null);
+    const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
+    const handleGameEnd = useCallback(async (result: GameResult) => {
+        if (!userId) return;
+        
+        try {
+            await ScoreService.saveScore('tictactoe', userId, result);
+            setRefreshLeaderboard(prev => prev + 1);
+        } catch (error) {
+            console.error('Failed to save score:', error);
+        }
+    }, [userId]);
 
     const checkWinner = useCallback((boardState: string[], mark: string): boolean => {
         const winPatterns = [
@@ -52,16 +70,18 @@ const TicTacToe: React.FC = () => {
 
         if (checkWinner(newBoard, currentPlayer)) {
             setWinner(`${currentPlayer} wins!`);
+            handleGameEnd('win');
             return;
         }
 
         if (newBoard.every((cell) => cell !== "")) {
             setWinner("Draw!");
+            handleGameEnd('draw');
             return;
         }
 
         setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
-    }, [board, currentPlayer, winner, checkWinner]);
+    }, [board, currentPlayer, winner, checkWinner, handleGameEnd]);
 
     const botMove = useCallback(() => {
         const bestMove = minimax(board, true).index;
@@ -97,6 +117,7 @@ const TicTacToe: React.FC = () => {
         setCurrentPlayer("O");
         setMode("");
         setWinner(null);
+        setRefreshLeaderboard(prev => prev + 1);
     };
 
     return (
@@ -194,6 +215,8 @@ const TicTacToe: React.FC = () => {
                     </div>
                 )}
             </div>
+            
+            <Leaderboard gameId="tictactoe" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };
