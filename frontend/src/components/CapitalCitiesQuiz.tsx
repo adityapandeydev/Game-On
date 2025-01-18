@@ -115,9 +115,9 @@ const CapitalCitiesQuiz: React.FC<CapitalCitiesQuizProps> = ({ userId }) => {
                         </h3>
                         
                         <div className="flex flex-col gap-2">
-                            {currentQuestion.options.map((option, index) => (
+                            {currentQuestion.options.map((option) => (
                                 <button
-                                    key={index}
+                                    key={`option-${option}`}
                                     className={`${getButtonClass(option)} py-2`}
                                     onClick={() => handleOptionSelect(option)}
                                     disabled={showNext || (score === 0) || wrongAnswers.has(option)}

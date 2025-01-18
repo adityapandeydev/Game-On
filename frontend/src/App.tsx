@@ -12,7 +12,6 @@ import GuessMyNumber from "./components/GuessMyNumber";
 import MathQuiz from "./components/MathQuiz";
 import CapitalCitiesQuiz from "./components/CapitalCitiesQuiz";
 import TypingTestGame from "./components/TypingTestGame";
-import Challenge from "./components/Challenge";
 import SlidingPuzzle from "./components/SlidingPuzzle";
 import Tetris from "./components/tetris";
 import { useAuth } from './context/AuthContext';
@@ -58,7 +57,6 @@ const App: React.FC = () => {
               <Route path="/math-quiz" element={<MathQuiz userId={user?.id} />} />
               <Route path="/capital-cities" element={<CapitalCitiesQuiz userId={user?.id} />} />
               <Route path="/typing-test" element={<TypingTestGame userId={user?.id} />} />
-              <Route path="/math-challenge" element={<Challenge userId={user?.id} />} />
               <Route path="/sliding-puzzle" element={<SlidingPuzzle userId={user?.id} />} />
               <Route path="/tetris" element={<Tetris userId={user?.id} />} />
             </Routes>

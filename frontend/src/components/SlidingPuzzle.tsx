@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ScoreService } from "../services/ScoreService";
 import { GameResult } from "../types/game";
 import Leaderboard from './Leaderboard';
@@ -68,7 +68,6 @@ const SlidingPuzzle: React.FC<SlidingPuzzleProps> = ({ userId }) => {
             setTiles(newTiles);
             setMoves(prev => prev + 1);
             setScore(prev => Math.max(0, prev - 1));
-            checkWin(newTiles);
         }
     }, [tiles, isGameActive]);
 
@@ -78,6 +77,11 @@ const SlidingPuzzle: React.FC<SlidingPuzzleProps> = ({ userId }) => {
             handleGameEnd('win');
         }
     }, [handleGameEnd]);
+
+    useEffect(() => {
+        if (!isGameActive) return;
+        checkWin(tiles);
+    }, [tiles, isGameActive, checkWin]);
 
     React.useEffect(() => {
         createGrid();
@@ -104,7 +108,7 @@ const SlidingPuzzle: React.FC<SlidingPuzzleProps> = ({ userId }) => {
                         <div className="grid grid-cols-3 gap-2 w-full h-full">
                             {tiles.map((tile, index) => (
                                 <button
-                                    key={index}
+                                    key={tile === null ? 'empty' : `tile-${tile}`}
                                     onClick={() => moveTile(index)}
                                     className={`${
                                         tile === null 

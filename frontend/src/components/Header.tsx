@@ -26,10 +26,14 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isLoggedIn, onLogout }
             >
                 ☰
             </button>
-            <div className="flex items-center cursor-pointer" onClick={handleHomeClick}>
+            <button
+                className="flex items-center focus:outline-none hover:opacity-80"
+                onClick={handleHomeClick}
+                aria-label="Go to Home"
+            >
                 <img src="/vite.svg" alt="Site Logo" className="h-8 w-8 mr-2 ml-1" />
                 <h1 className="text-lg font-bold flex-1 hidden sm:block">Game On</h1>
-            </div>
+            </button>
             <input
                 type="text"
                 className="flex-1 p-2 rounded-xl bg-gray-900 text-textSecondary focus:outline-none max-w-40 sm:max-w-md md:max-w-lg lg:max-w-xl ml-4"

@@ -5,6 +5,7 @@ interface LeaderboardEntry {
     score: number;
     currentStreak: number;
     maxStreak: number;
+    rank?: number;
 }
 
 interface LeaderboardProps {
@@ -17,13 +18,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, refreshTrigger }) => 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const gameNames: { [key: string]: string } = {
-        'typingtest': 'TypeStorm',
-        'mathquiz': 'Quantum Guess',
-        'capitalcities': 'Geo Quest',
-        'mathchallenge': 'Math Challenge',
-        // ... other games
-    };
+    // 
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
@@ -67,7 +62,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, refreshTrigger }) => 
                     </thead>
                     <tbody>
                         {scores.map((entry, index) => (
-                            <tr key={index} className="border-t border-gray-700">
+                            <tr 
+                                key={`${entry.username}-${entry.score}-${index}`}
+                                className="border-t border-gray-700"
+                            >
                                 <td className="p-2">{index + 1}</td>
                                 <td className="p-2">{entry.username}</td>
                                 <td className="p-2">{entry.score}</td>

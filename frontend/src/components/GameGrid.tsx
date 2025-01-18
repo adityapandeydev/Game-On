@@ -38,7 +38,6 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
                 { id: 7, title: "Quantum Guess" },
                 { id: 8, title: "Geo Quest" },
                 { id: 9, title: "TypeStorm" },
-                { id: 10, title: "Math Challenge" },
             ],
         },
     ];
@@ -69,9 +68,6 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
                 break;
             case "TypeStorm":
                 navigate("/typing-test");
-                break;
-            case "Math Challenge":
-                navigate("/math-challenge");
                 break;
             case "Sliding Puzzle":
                 navigate("/sliding-puzzle");
