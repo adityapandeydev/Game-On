@@ -1,4 +1,4 @@
-    import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { ScoreService } from "../services/ScoreService";
 import { GameResult } from "../types/game";
 import Leaderboard from './Leaderboard';
@@ -112,74 +112,78 @@ const GuessMyNumber: React.FC<GuessMyNumberProps> = ({ userId }) => {
     }, [difficulty]);
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold text-white mb-6">Guess My Number</h2>
+        <div className="min-h-[calc(100vh-4rem)] py-8">
+            <div className="container mx-auto px-4 max-w-4xl h-full">
+                <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                    <h2 className="text-3xl font-bold text-white mb-6">Guess My Number</h2>
 
-                {!difficulty ? (
-                    <div className="mb-6 flex flex-col items-center">
-                        <p className="text-lg text-gray-300 mb-4">Select Difficulty</p>
-                        <div className="flex gap-4">
-                            {difficulties.map((diff) => (
-                                <button
-                                    key={diff.label}
-                                    onClick={() => handleDifficultySelect(diff)}
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                >
-                                    {diff.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        <p className="text-lg text-gray-300 mb-6">
-                            (Between 1 and {difficulty.range})
-                        </p>
-
-                        <div className="flex flex-col items-center gap-6 mb-6">
-                            <div className="w-20 h-20 flex items-center justify-center text-4xl font-bold bg-gray-900 border-4 border-purple-600 rounded-lg">
-                                ?
-                            </div>
-
+                    {!difficulty ? (
+                        <div className="mb-6 flex flex-col items-center">
+                            <p className="text-lg text-gray-300 mb-4">Select Difficulty</p>
                             <div className="flex gap-4">
-                                <input
-                                    type="number"
-                                    value={guess}
-                                    onChange={(e) => setGuess(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleCheck()}
-                                    className="w-24 px-4 py-2 bg-gray-900 text-white border-4 border-purple-600 rounded-lg text-center text-xl"
-                                    placeholder="#"
-                                />
-                                <button
-                                    onClick={handleCheck}
-                                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                >
-                                    Check!
-                                </button>
+                                {difficulties.map((diff) => (
+                                    <button
+                                        key={diff.label}
+                                        onClick={() => handleDifficultySelect(diff)}
+                                        className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    >
+                                        {diff.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
+                    ) : (
+                        <>
+                            <p className="text-lg text-gray-300 mb-6">
+                                (Between 1 and {difficulty.range})
+                            </p>
 
-                        <p className="text-xl text-gray-300 mb-6">{message}</p>
+                            <div className="flex flex-col items-center gap-6 mb-6">
+                                <div className="w-20 h-20 flex items-center justify-center text-4xl font-bold bg-gray-900 border-4 border-purple-600 rounded-lg">
+                                    ?
+                                </div>
 
-                        <div className="flex flex-col items-center gap-3">
-                            <p className="text-lg text-gray-300">💯 Score: {score}</p>
-                            <p className="text-lg text-gray-300">🥇 Highscore: {highScore}</p>
-                        </div>
+                                <div className="flex gap-4">
+                                    <input
+                                        type="number"
+                                        value={guess}
+                                        onChange={(e) => setGuess(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleCheck()}
+                                        className="w-24 px-4 py-2 bg-gray-900 text-white border-4 border-purple-600 rounded-lg text-center text-xl"
+                                        placeholder="#"
+                                    />
+                                    <button
+                                        onClick={handleCheck}
+                                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    >
+                                        Check!
+                                    </button>
+                                </div>
+                            </div>
 
-                        {(score === 0 || message === "🎉 Correct Number!") && (
-                            <button
-                                onClick={handleAgain}
-                                className="mt-6 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                            >
-                                Play Again
-                            </button>
-                        )}
-                    </>
-                )}
+                            <p className="text-xl text-gray-300 mb-6">{message}</p>
+
+                            <div className="flex flex-col items-center gap-3">
+                                <p className="text-lg text-gray-300">💯 Score: {score}</p>
+                                <p className="text-lg text-gray-300">🥇 Highscore: {highScore}</p>
+                            </div>
+
+                            {(score === 0 || message === "🎉 Correct Number!") && (
+                                <button
+                                    onClick={handleAgain}
+                                    className="mt-6 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                >
+                                    Play Again
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
+                
+                <div className="mt-8">
+                    <Leaderboard gameId="guessmynumber" refreshTrigger={refreshLeaderboard} />
+                </div>
             </div>
-            
-            <Leaderboard gameId="guessmynumber" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

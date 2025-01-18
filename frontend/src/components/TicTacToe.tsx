@@ -13,7 +13,45 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
     const [mode, setMode] = useState<string>("");
     const [winner, setWinner] = useState<string | null>(null);
     const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
-    const handleGameEnd = useCallback(async (result: GameResult) => {
+    const [gameOver, setGameOver] = useState(false);
+    const [score, setScore] = useState(0);
+    const [streak, setStreak] = useState(0);
+    const [message, setMessage] = useState("");
+    const [playerMark, setPlayerMark] = useState<string>("");
+
+    const handleGameEnd = useCallback(async (winner: string | null) => {
+        setGameOver(true);
+        let result: GameResult = 'lose';
+
+        if (mode === 'vsBot') {
+            if (winner === 'O') {
+                setScore(prev => prev + 20);
+                setStreak(prev => prev + 1);
+                result = 'win';
+                setMessage("🎉 You Win! Streak increased!");
+            } else if (winner === 'X') {
+                setStreak(0);
+                result = 'lose';
+                setMessage("❌ Bot Wins! Streak reset!");
+            } else {
+                setMessage("😐 It's a Draw!");
+                result = 'draw';
+            }
+        } else {
+            if (winner === playerMark) {
+                setScore(prev => prev + 20);
+                setStreak(prev => prev + 1);
+                result = 'win';
+                setMessage(`🎉 ${winner} Wins! Streak increased!`);
+            } else if (winner) {
+                setStreak(0);
+                setMessage(`❌ ${winner} Wins! Streak reset!`);
+            } else {
+                setMessage("😐 It's a Draw!");
+                result = 'draw';
+            }
+        }
+
         if (!userId) return;
         
         try {
@@ -22,7 +60,7 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
         } catch (error) {
             console.error('Failed to save score:', error);
         }
-    }, [userId]);
+    }, [userId, mode, playerMark]);
 
     const checkWinner = useCallback((boardState: string[], mark: string): boolean => {
         const winPatterns = [
@@ -98,9 +136,40 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
 
     const selectMode = (selectedMode: string) => {
         setMode(selectedMode);
-        setBoard(["", "", "", "", "", "", "", "", ""]);
+        setBoard(Array(9).fill(""));
         setWinner(null);
+        setGameOver(false);
+        if (selectedMode === 'vsBot') {
+            setPlayerMark('O');
+        }
+        setMessage(selectedMode === 'vsBot' ? "Choose who goes first!" : "Choose your mark (X or O)!");
     };
+
+    const chooseMark = (mark: string) => {
+        setPlayerMark(mark);
+        setCurrentPlayer('O');
+        setMessage(`You are ${mark}. Game started!`);
+    };
+
+    const renderMarkSelection = () => (
+        <div className="text-center mb-4">
+            <p className="text-lg text-gray-300 mb-2">Choose your mark:</p>
+            <div className="flex gap-4 justify-center">
+                <button
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+                    onClick={() => chooseMark('O')}
+                >
+                    O
+                </button>
+                <button
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+                    onClick={() => chooseMark('X')}
+                >
+                    X
+                </button>
+            </div>
+        </div>
+    );
 
     const startGame = (playerGoesFirst: boolean) => {
         setCurrentPlayer(playerGoesFirst ? "O" : "X");
@@ -121,102 +190,121 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold text-white mb-6">Tic Tac Toe</h2>
+        <div className="min-h-[calc(100vh-4rem)] py-8">
+            <div className="container mx-auto px-4 max-w-4xl h-full">
+                <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                    <h2 className="text-3xl font-bold text-white mb-6">Tic Tac Toe</h2>
 
-                {!mode && (
-                    <div className="mb-6 flex flex-col items-center">
-                        <p className="text-lg text-gray-300 mb-4">Choose your mode:</p>
-                        <div className="flex gap-4">
-                            <button
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={() => selectMode("vsBot")}
-                            >
-                                VS Bot
-                            </button>
-                            <button
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={() => selectMode("1v1")}
-                            >
-                                1v1
-                            </button>
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-md text-center mb-4">
+                        <div className="bg-gray-700 p-3 rounded-lg">
+                            <p className="text-gray-300">💯 Score</p>
+                            <p className="text-2xl text-white">{score}</p>
+                        </div>
+                        <div className="bg-gray-700 p-3 rounded-lg">
+                            <p className="text-gray-300">🔥 Streak</p>
+                            <p className="text-2xl text-white">{streak}</p>
                         </div>
                     </div>
-                )}
 
-                {mode === "vsBot" && !winner && board.every(cell => cell === "") && (
-                    <div className="mb-6 flex flex-col items-center">
-                        <p className="text-lg text-gray-300 mb-4">Who plays first?</p>
-                        <div className="flex gap-4">
+                    <p className="text-lg text-gray-300 mb-4">{message}</p>
+
+                    {!mode && (
+                        <div className="mb-6 flex flex-col items-center">
+                            <p className="text-lg text-gray-300 mb-4">Choose your mode:</p>
+                            <div className="flex gap-4">
+                                <button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    onClick={() => selectMode("vsBot")}
+                                >
+                                    VS Bot
+                                </button>
+                                <button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    onClick={() => selectMode("1v1")}
+                                >
+                                    1v1
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {mode === "vsBot" && !winner && board.every(cell => cell === "") && (
+                        <div className="mb-6 flex flex-col items-center">
+                            <p className="text-lg text-gray-300 mb-4">Who plays first?</p>
+                            <div className="flex gap-4">
+                                <button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    onClick={() => startGame(true)}
+                                >
+                                    You (O)
+                                </button>
+                                <button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    onClick={() => startGame(false)}
+                                >
+                                    Bot (X)
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {mode === "1v1" && !winner && board.every(cell => cell === "") && (
+                        <div className="mb-6 flex flex-col items-center">
+                            <p className="text-lg text-gray-300 mb-4">Choose your mark:</p>
+                            <div className="flex gap-4">
+                                <button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    onClick={() => start1v1("X")}
+                                >
+                                    Player X
+                                </button>
+                                <button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    onClick={() => start1v1("O")}
+                                >
+                                    Player O
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {mode === '1v1' && !playerMark && renderMarkSelection()}
+
+                    {mode && !winner && (
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            {board.map((cell, index) => (
+                                <button
+                                    key={`cell-${Math.floor(index/3)}-${index%3}`}
+                                    className={`w-20 h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 ${
+                                        cell ? 'border-purple-600' : 'border-gray-700'
+                                    } rounded-lg hover:bg-gray-800 transition-colors`}
+                                    onClick={() => makeMove(index)}
+                                    disabled={!!cell || !!winner}
+                                    aria-label={`Cell ${index + 1}`}
+                                >
+                                    {cell}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {winner && (
+                        <div className="text-center">
+                            <p className="text-xl font-bold text-green-400 mb-4">{winner}</p>
                             <button
                                 className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={() => startGame(true)}
+                                onClick={resetGame}
                             >
-                                You (O)
-                            </button>
-                            <button
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={() => startGame(false)}
-                            >
-                                Bot (X)
+                                Play Again
                             </button>
                         </div>
-                    </div>
-                )}
-
-                {mode === "1v1" && !winner && board.every(cell => cell === "") && (
-                    <div className="mb-6 flex flex-col items-center">
-                        <p className="text-lg text-gray-300 mb-4">Choose your mark:</p>
-                        <div className="flex gap-4">
-                            <button
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={() => start1v1("X")}
-                            >
-                                Player X
-                            </button>
-                            <button
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={() => start1v1("O")}
-                            >
-                                Player O
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {mode && !winner && (
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        {board.map((cell, index) => (
-                            <button
-                                key={`cell-${Math.floor(index/3)}-${index%3}`}
-                                className={`w-20 h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 ${
-                                    cell ? 'border-purple-600' : 'border-gray-700'
-                                } rounded-lg hover:bg-gray-800 transition-colors`}
-                                onClick={() => makeMove(index)}
-                                disabled={!!cell || !!winner}
-                                aria-label={`Cell ${index + 1}`}
-                            >
-                                {cell}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {winner && (
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-green-400 mb-4">{winner}</p>
-                        <button
-                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                            onClick={resetGame}
-                        >
-                            Play Again
-                        </button>
-                    </div>
-                )}
+                    )}
+                </div>
+                
+                <div className="mt-8">
+                    <Leaderboard gameId="tictactoe" refreshTrigger={refreshLeaderboard} />
+                </div>
             </div>
-            
-            <Leaderboard gameId="tictactoe" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

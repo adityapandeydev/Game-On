@@ -116,47 +116,50 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
     }, [userId]);
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold text-white mb-6">Connect 4</h2>
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-900 py-8">
+            <div className="container mx-auto px-4 max-w-4xl h-full">
+                <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                    <h2 className="text-3xl font-bold text-white mb-6">Connect 4</h2>
 
-                {winner ? (
-                    <h3 className="text-xl font-bold text-green-400 mb-6">{winner} Wins!</h3>
-                ) : (
-                    <h3 className="text-xl text-gray-300 mb-6">
-                        {currentPlayer === "R" ? "Red's" : "Yellow's"} turn
-                    </h3>
-                )}
+                    {winner ? (
+                        <h3 className="text-xl font-bold text-green-400 mb-6">{winner} Wins!</h3>
+                    ) : (
+                        <h3 className="text-xl text-gray-300 mb-6">
+                            {currentPlayer === "R" ? "Red's" : "Yellow's"} turn
+                        </h3>
+                    )}
 
-                <div className="bg-gray-900 p-4 rounded-lg mb-6">
-                    {board.map((row, rowIndex) => (
-                        <div key={generateCellId(rowIndex, -1)} className="flex justify-center">
-                            {row.map((cell, colIndex) => (
-                                <button
-                                    key={generateCellId(rowIndex, colIndex)}
-                                    className={`
-                                        w-12 h-12 sm:w-16 sm:h-16 m-1 rounded-full border-4
-                                        transition-all duration-200 ${getCellStyle(cell)}
-                                    `}
-                                    onClick={() => dropPiece(colIndex)}
-                                    aria-label={`Column ${colIndex + 1}`}
-                                />
-                            ))}
-                        </div>
-                    ))}
+                    <div className="bg-gray-900 p-4 rounded-lg mb-6">
+                        {board.map((row, rowIndex) => (
+                            <div key={generateCellId(rowIndex, -1)} className="flex justify-center">
+                                {row.map((cell, colIndex) => (
+                                    <button
+                                        key={generateCellId(rowIndex, colIndex)}
+                                        className={`
+                                            w-12 h-12 sm:w-16 sm:h-16 m-1 rounded-full border-4
+                                            transition-all duration-200 ${getCellStyle(cell)}
+                                        `}
+                                        onClick={() => dropPiece(colIndex)}
+                                        aria-label={`Column ${colIndex + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+
+                    {gameOver && (
+                        <button
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                            onClick={() => window.location.reload()}
+                        >
+                            Play Again
+                        </button>
+                    )}
                 </div>
-
-                {gameOver && (
-                    <button
-                        className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                        onClick={() => window.location.reload()}
-                    >
-                        Play Again
-                    </button>
-                )}
+                <div className="mt-8">
+                    <Leaderboard gameId="connect4" refreshTrigger={refreshLeaderboard} />
+                </div>
             </div>
-
-            <Leaderboard gameId="connect4" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

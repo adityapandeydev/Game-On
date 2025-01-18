@@ -17,9 +17,10 @@ const GameCard: React.FC<GameCardProps> = ({ title }) => {
         "Pig Game": { type: "video", src: "/piggame.mp4" },
         "Quantum Guess": { type: "video", src: "/Math Quiz.mp4"},
         "Geo Quest": { type: "video", src: "/CapitalCities.mp4" },
-        "TypeStorm": { type: "gif", src: "/Typing.gif" },
+        "TypeStorm": { type: "gif", src: "/typing2.gif" },
         "Sliding Puzzle": { type: "video", src: "/SlidingPuzzle.mp4" },
-        "Tetris": { type: "video", src: "/tetris.mp4" },
+        "Tetris": { type: "gif", src: "/tetris1.gif" },
+        "Sliding Puzzle": { type: "gif", src: "/sliding puzzle.gif" },
     };
 
     const media = mediaMap[title];

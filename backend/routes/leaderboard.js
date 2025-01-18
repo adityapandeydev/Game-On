@@ -52,7 +52,7 @@ router.get('/game/:gameId', auth, async (req, res) => {
     }
 });
 
-// Get global leaderboard
+// Get global leaderboard with enhanced information
 router.get('/global', auth, async (req, res) => {
     try {
         const aggregatedScores = await Score.aggregate([
@@ -60,61 +60,84 @@ router.get('/global', auth, async (req, res) => {
                 $group: {
                     _id: '$userId',
                     totalScore: { $sum: '$score' },
+                    gamesPlayed: { $sum: 1 },
                     gameScores: {
                         $push: {
                             gameId: '$gameId',
                             score: '$score'
                         }
-                    }
+                    },
+                    lastPlayed: { $max: '$timestamp' }
                 }
             },
             { $sort: { totalScore: -1 } },
-            { $limit: 10 }
+            { $limit: 10 },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' },
+            {
+                $project: {
+                    username: '$user.name',
+                    totalScore: 1,
+                    gamesPlayed: 1,
+                    gameScores: 1,
+                    lastPlayed: 1
+                }
+            }
         ]);
 
-        const populatedScores = await User.populate(aggregatedScores, {
-            path: '_id',
-            select: 'name'
-        });
-
-        const leaderboard = populatedScores.map(entry => ({
-            userId: entry._id._id,
-            username: entry._id.name,
-            totalScore: entry.totalScore,
-            gameScores: entry.gameScores.reduce((acc, curr) => {
-                acc[curr.gameId] = curr.score;
-                return acc;
-            }, {})
-        }));
-
-        res.json(leaderboard);
+        res.json(aggregatedScores);
     } catch (error) {
+        console.error('Global leaderboard error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// Add this new route
+// Update user score with enhanced streak handling
 router.post('/score', auth, async (req, res) => {
     try {
-        const { userId, gameId, score, streak } = req.body;
+        const { userId, gameId, score, result } = req.body;
         
-        const newScore = new Score({
-            userId,
-            gameId,
-            score,
-            streak,
-            timestamp: new Date()
-        });
+        // Find existing score record
+        let existingScore = await Score.findOne({ userId, gameId });
+        
+        if (!existingScore) {
+            existingScore = new Score({
+                userId,
+                gameId,
+                score: 0,
+                streak: 0
+            });
+        }
 
-        await newScore.save();
-        res.json({ message: 'Score saved successfully' });
+        // Update streak based on result
+        if (result === 'win') {
+            existingScore.streak += 1;
+            existingScore.maxStreak = Math.max(existingScore.streak, existingScore.maxStreak || 0);
+        } else if (result === 'lose') {
+            existingScore.streak = 0;
+        }
+
+        // Update score if new score is higher
+        existingScore.score = Math.max(existingScore.score, score);
+        existingScore.timestamp = new Date();
+
+        await existingScore.save();
+        res.json({ message: 'Score updated successfully', score: existingScore });
     } catch (error) {
+        console.error('Score update error:', error);
         res.status(500).json({ message: 'Error saving score' });
     }
 });
 
 // Get user stats for a specific game
-router.get('/game/:gameId/stats/:userId', async (req, res) => {
+router.get('/game/:gameId/stats/:userId', auth, async (req, res) => {
     try {
         const { gameId, userId } = req.params;
         const stats = await Score.aggregate([
@@ -124,7 +147,9 @@ router.get('/game/:gameId/stats/:userId', async (req, res) => {
                     _id: null,
                     highestScore: { $max: '$score' },
                     currentStreak: { $max: '$streak' },
-                    totalGamesPlayed: { $sum: 1 }
+                    maxStreak: { $max: '$maxStreak' },
+                    totalGamesPlayed: { $sum: 1 },
+                    lastPlayed: { $max: '$timestamp' }
                 }
             }
         ]);
@@ -135,10 +160,9 @@ router.get('/game/:gameId/stats/:userId', async (req, res) => {
                 gameId,
                 highestScore: 0,
                 currentStreak: 0,
+                maxStreak: 0,
                 totalGamesPlayed: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0
+                lastPlayed: null
             });
         }
 
@@ -149,21 +173,7 @@ router.get('/game/:gameId/stats/:userId', async (req, res) => {
             _id: undefined
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// Update user stats
-router.put('/stats/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const stats = req.body;
-        
-        // Update stats for the user
-        await User.findByIdAndUpdate(userId, { stats });
-        
-        res.json({ message: 'Stats updated successfully' });
-    } catch (error) {
+        console.error('Stats fetch error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });

@@ -77,78 +77,82 @@ const PigGame: React.FC<PigGameProps> = ({ userId }) => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold text-white mb-6">Pig Game</h2>
+        <div className="min-h-[102%] bg-gray-900 py-8">
+            <div className="container mx-auto px-4 max-w-4xl h-full">
+                <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
+                    <h2 className="text-3xl font-bold text-white mb-6">Pig Game</h2>
 
-                <div className="flex flex-col sm:flex-row gap-6 w-full mb-8">
-                    {[0, 1].map((player) => (
-                        <div
-                            key={`player-${player}`}
-                            className={`flex-1 flex flex-col items-center p-6 rounded-lg ${
-                                activePlayer === player ? "bg-gray-700" : "bg-gray-900"
-                            } ${!playing && scores[player] >= 20 ? "bg-green-600" : ""}`}
-                        >
-                            <h3 className="text-2xl font-bold text-white mb-4">
-                                Player {player + 1}
-                            </h3>
-                            <p className="text-4xl font-bold text-white mb-6">
-                                {scores[player]}
-                            </p>
-                            {!playing && scores[player] >= 20 ? (
-                                <p className="text-xl font-bold text-white">🏆 Winner!</p>
-                            ) : (
-                                <div className={`p-4 rounded-lg ${
-                                    activePlayer === player ? "bg-purple-600" : "bg-gray-700"
-                                }`}>
-                                    <p className="text-lg text-white mb-2">Current</p>
-                                    <p className="text-3xl font-bold text-white">
-                                        {activePlayer === player ? currentScore : 0}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
-                <div className="flex flex-col items-center gap-6">
-                    {dice !== null && (
-                        <img
-                            src={`/dice-${dice}.png`}
-                            alt={`Dice ${dice}`}
-                            className="w-20 h-20 rounded-lg bg-gray-900 p-2"
-                        />
-                    )}
-
-                    <div className="flex gap-4">
-                        <button
-                            onClick={rollDice}
-                            disabled={!playing}
-                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors disabled:opacity-50"
-                        >
-                            🎲 Roll Dice
-                        </button>
-                        <button
-                            onClick={holdScore}
-                            disabled={!playing}
-                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors disabled:opacity-50"
-                        >
-                            📥 Hold
-                        </button>
+                    <div className="flex flex-col sm:flex-row gap-6 w-full mb-8">
+                        {[0, 1].map((player) => (
+                            <div
+                                key={`player-${player}`}
+                                className={`flex-1 flex flex-col items-center p-6 rounded-lg ${
+                                    activePlayer === player ? "bg-gray-700" : "bg-gray-900"
+                                } ${!playing && scores[player] >= 20 ? "bg-green-600" : ""}`}
+                            >
+                                <h3 className="text-2xl font-bold text-white mb-4">
+                                    Player {player + 1}
+                                </h3>
+                                <p className="text-4xl font-bold text-white mb-6">
+                                    {scores[player]}
+                                </p>
+                                {!playing && scores[player] >= 20 ? (
+                                    <p className="text-xl font-bold text-white">🏆 Winner!</p>
+                                ) : (
+                                    <div className={`p-4 rounded-lg ${
+                                        activePlayer === player ? "bg-purple-600" : "bg-gray-700"
+                                    }`}>
+                                        <p className="text-lg text-white mb-2">Current</p>
+                                        <p className="text-3xl font-bold text-white">
+                                            {activePlayer === player ? currentScore : 0}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
 
-                    {!playing && (
-                        <button
-                            onClick={initGame}
-                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                        >
-                            Play Again
-                        </button>
-                    )}
+                    <div className="flex flex-col items-center gap-6">
+                        {dice !== null && (
+                            <img
+                                src={`/dice-${dice}.png`}
+                                alt={`Dice ${dice}`}
+                                className="w-20 h-20 rounded-lg bg-gray-900 p-2"
+                            />
+                        )}
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={rollDice}
+                                disabled={!playing}
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors disabled:opacity-50"
+                            >
+                                🎲 Roll Dice
+                            </button>
+                            <button
+                                onClick={holdScore}
+                                disabled={!playing}
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors disabled:opacity-50"
+                            >
+                                📥 Hold
+                            </button>
+                        </div>
+
+                        {!playing && (
+                            <button
+                                onClick={initGame}
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                            >
+                                Play Again
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="mt-8">
+                    <Leaderboard gameId="piggame" refreshTrigger={refreshLeaderboard} />
                 </div>
             </div>
-
-            <Leaderboard gameId="piggame" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };

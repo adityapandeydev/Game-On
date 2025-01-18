@@ -15,6 +15,11 @@ import TypingTestGame from "./components/TypingTestGame";
 import SlidingPuzzle from "./components/SlidingPuzzle";
 import Tetris from "./components/tetris";
 import { useAuth } from './context/AuthContext';
+import LeaderboardPage from './components/LeaderboardPage';
+import ReviewsPage from './components/ReviewsPage';
+import ScrollToTop from './components/ScrollToTop';
+import Tutorials from './components/tutorials';
+import { SearchProvider } from './context/SearchContext';
 
 const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -30,39 +35,43 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <div className="bg-gray-950 text-white min-h-screen">
-        <Header
-          onSidebarToggle={() => setSidebarVisible(!sidebarVisible)}
-          isLoggedIn={isLoggedIn}
-          onLogout={() => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            setUser(null);
-            setIsLoggedIn(false);
-          }}
-        />
-
-        <div className="flex h-[calc(100%-4rem)]">
-          <Sidebar setSidebarVisible={setSidebarVisible} visible={sidebarVisible} />
-
-          <div className="flex-1 flex flex-col overflow-y-auto">
-            <Routes>
-              <Route path="/" element={<GameGrid isLoggedIn={isLoggedIn} />} />
-              <Route path="/login" element={<Login onLogin={handleLogin} />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/tictactoe" element={<TicTacToe userId={user?.id} />} />
-              <Route path="/connect4" element={<Connect4 userId={user?.id} />} />
-              <Route path="/pig-game" element={<PigGame userId={user?.id} />} />
-              <Route path="/guess-number" element={<GuessMyNumber userId={user?.id} />} />
-              <Route path="/math-quiz" element={<MathQuiz userId={user?.id} />} />
-              <Route path="/capital-cities" element={<CapitalCitiesQuiz userId={user?.id} />} />
-              <Route path="/typing-test" element={<TypingTestGame userId={user?.id} />} />
-              <Route path="/sliding-puzzle" element={<SlidingPuzzle userId={user?.id} />} />
-              <Route path="/tetris" element={<Tetris userId={user?.id} />} />
-            </Routes>
+      <SearchProvider>
+        <ScrollToTop />
+        <div className="bg-gray-950 text-white flex flex-col">
+          <Header
+            onSidebarToggle={() => setSidebarVisible(!sidebarVisible)}
+            isLoggedIn={isLoggedIn}
+            onLogout={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("user");
+              setUser(null);
+              setIsLoggedIn(false);
+            }}
+          />
+          <div className="flex flex-1">
+            <Sidebar setSidebarVisible={setSidebarVisible} visible={sidebarVisible} />
+            <div className="flex-1 flex flex-col">
+              <Routes>
+                <Route path="/" element={<GameGrid isLoggedIn={isLoggedIn} />} />
+                <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/tictactoe" element={<TicTacToe userId={user?.id} />} />
+                <Route path="/connect4" element={<Connect4 userId={user?.id} />} />
+                <Route path="/pig-game" element={<PigGame userId={user?.id} />} />
+                <Route path="/guess-number" element={<GuessMyNumber userId={user?.id} />} />
+                <Route path="/math-quiz" element={<MathQuiz userId={user?.id} />} />
+                <Route path="/capital-cities" element={<CapitalCitiesQuiz userId={user?.id} />} />
+                <Route path="/typing-test" element={<TypingTestGame userId={user?.id} />} />
+                <Route path="/sliding-puzzle" element={<SlidingPuzzle userId={user?.id} />} />
+                <Route path="/tetris" element={<Tetris userId={user?.id} />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/reviews" element={<ReviewsPage />} />
+                <Route path="/tutorials" element={<Tutorials />} />
+              </Routes>
+            </div>
           </div>
         </div>
-      </div>
+      </SearchProvider>
     </Router>
   );
 };

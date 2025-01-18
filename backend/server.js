@@ -3,6 +3,8 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const leaderboardRoutes = require('./routes/leaderboard');
+const trendingRoutes = require('./routes/trending');
+const recentlyPlayedRoutes = require('./routes/recentlyPlayed');
 require('dotenv').config();
 
 const app = express();
@@ -21,6 +23,8 @@ app.use(express.json());  // Parse JSON body data
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/trending', trendingRoutes);
+app.use('/api/recently-played', recentlyPlayedRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
