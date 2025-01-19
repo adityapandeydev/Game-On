@@ -35,66 +35,32 @@ export class ScoreService {
         return rule;
     }
 
-    static updateStreak(previousResult: GameResult, currentStreak: number): number {
-        if (previousResult === 'win') {
-            return currentStreak + 1;
-        }
-        return 1; // Reset streak on draw or lose
-    }
-
-    static async saveScore(gameId: string, userId: string, result: GameResult): Promise<void> {
+    static async saveScore(gameId: string, userId: string, newScore: number): Promise<void> {
         try {
-            const stats = await this.getUserGameStats(gameId, userId);
-            
-            if (result === 'win') {
-                const newStreak = stats.currentStreak + 1;
-                const scoreWithStreak = this.calculateScore(gameId, result, { streak: newStreak });
-                
-                console.log('Saving win:', {
-                    streak: newStreak,
-                    score: scoreWithStreak
-                });
-
-                await this.saveGameScore({
+            // Only update the database if the new score is higher
+            const response = await fetch('http://localhost:5000/api/leaderboard/submit', {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
                     gameId,
                     userId,
-                    score: scoreWithStreak,
-                    streak: newStreak,
-                    timestamp: new Date()
-                });
+                    score: newScore,
+                    gameName: gameId
+                })
+            });
 
-            } else {
-                // On loss, save score 0 and reset streak
-                await this.saveGameScore({
-                    gameId,
-                    userId,
-                    score: 0,
-                    streak: 0,
-                    timestamp: new Date()
-                });
+            if (!response.ok) {
+                const data = await response.json();
+                if (data.msg?.includes('not higher')) {
+                    console.log('Score not higher than previous best');
+                    return;
+                }
+                throw new Error('Failed to save score');
             }
         } catch (error) {
             console.error('Error saving score:', error);
             throw error;
         }
-    }
-
-    // Implement these methods based on your backend/database setup
-    private static async getUserGameStats(gameId: string, userId: string): Promise<UserGameStats> {
-        const response = await fetch(`http://localhost:5000/api/leaderboard/game/${gameId}/stats/${userId}`);
-        if (!response.ok) {
-            return {
-                userId,
-                gameId,
-                highestScore: 0,
-                currentStreak: 0,
-                totalGamesPlayed: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0
-            };
-        }
-        return response.json();
     }
 
     private static getHeaders() {
@@ -103,17 +69,5 @@ export class ScoreService {
             'Content-Type': 'application/json',
             'x-auth-token': token ?? ''
         };
-    }
-
-    private static async saveGameScore(score: GameScore): Promise<void> {
-        const response = await fetch('http://localhost:5000/api/leaderboard/score', {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(score)
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to save score');
-        }
     }
 }

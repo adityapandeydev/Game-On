@@ -1,66 +1,132 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ScoreService } from "../services/ScoreService";
-import { GameResult } from "../types/game";
 import Leaderboard from './Leaderboard';
 
 interface TicTacToeProps {
     userId?: string;
 }
 
+interface GameState {
+    currentScore: number;
+    currentStreak: number;
+    highestScore: number;
+}
+
 const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
-    const [board, setBoard] = useState<string[]>(["", "", "", "", "", "", "", "", ""]);
+    const [board, setBoard] = useState<string[]>(Array(9).fill(""));
     const [currentPlayer, setCurrentPlayer] = useState<string>("O");
-    const [mode, setMode] = useState<string>("");
     const [winner, setWinner] = useState<string | null>(null);
     const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
     const [gameOver, setGameOver] = useState(false);
-    const [score, setScore] = useState(0);
-    const [streak, setStreak] = useState(0);
-    const [message, setMessage] = useState("");
-    const [playerMark, setPlayerMark] = useState<string>("");
+    const [message, setMessage] = useState("Choose who goes first!");
+    const [gameState, setGameState] = useState<GameState>({
+        currentScore: 0,
+        currentStreak: 0,
+        highestScore: 0
+    });
+
+    // Fetch initial game state
+    useEffect(() => {
+        const fetchGameState = async () => {
+            if (!userId) return;
+            try {
+                const stats = await ScoreService.getUserGameStats('tictactoe', userId);
+                setGameState({
+                    currentScore: stats.currentScore || 0,
+                    currentStreak: stats.currentStreak || 0,
+                    highestScore: stats.highestScore || 0
+                });
+            } catch (error) {
+                console.error('Failed to fetch game stats:', error);
+            }
+        };
+        fetchGameState();
+    }, [userId]);
+
+    const calculateScoreIncrease = (streak: number): number => {
+        const baseScore = 20;
+        if (streak === 1) return baseScore;
+        const multiplier = 1 + ((streak - 1) * 0.1);
+        return Math.round(baseScore * multiplier);
+    };
+
+    const updateGameState = async (result: 'win' | 'draw' | 'lose') => {
+        let newStreak = gameState.currentStreak;
+        let newTotalScore = gameState.currentScore;
+
+        if (result === 'win') {
+            newStreak += 1;
+            const scoreIncrease = calculateScoreIncrease(newStreak);
+            newTotalScore += scoreIncrease;
+        } else if (result === 'draw') {
+            // For draw, just award 10 points without adding to total score
+            newStreak = 0; // Reset streak on draw
+            newTotalScore = 10; // Just award 10 points for draw
+        } else {
+            // Reset streak and keep current score on loss
+            newStreak = 0;
+        }
+
+        setGameState(prev => ({
+            currentScore: newTotalScore,
+            currentStreak: newStreak,
+            highestScore: Math.max(prev.highestScore, newTotalScore)
+        }));
+
+        if (!userId) return;
+
+        try {
+            await ScoreService.saveScore('tictactoe', userId, result);
+            
+            if (newTotalScore > gameState.highestScore) {
+                try {
+                    await ScoreService.updateLeaderboard('tictactoe', userId, newTotalScore);
+                } catch (error) {
+                    console.error('Failed to update leaderboard:', error);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to save game stats:', error);
+        }
+    };
 
     const handleGameEnd = useCallback(async (winner: string | null) => {
         setGameOver(true);
-        let result: GameResult = 'lose';
+        let resultMessage = "";
+        let currentScore = 0;
 
-        if (mode === 'vsBot') {
-            if (winner === 'O') {
-                setScore(prev => prev + 20);
-                setStreak(prev => prev + 1);
-                result = 'win';
-                setMessage("🎉 You Win! Streak increased!");
-            } else if (winner === 'X') {
-                setStreak(0);
-                result = 'lose';
-                setMessage("❌ Bot Wins! Streak reset!");
-            } else {
-                setMessage("😐 It's a Draw!");
-                result = 'draw';
+        if (winner === 'O') { // Player wins
+            const newStreak = gameState.currentStreak + 1;
+            const scoreIncrease = calculateScoreIncrease(newStreak);
+            currentScore = gameState.currentScore + scoreIncrease;
+            resultMessage = `🎉 You Win! +${scoreIncrease} points! (${newStreak}x streak)`;
+            
+            // Only try to save score on wins
+            if (userId) {
+                try {
+                    console.log('Saving score:', currentScore); // Debug log
+                    await ScoreService.saveScore('tictactoe', userId, currentScore);
+                    console.log('Score saved successfully'); // Debug log
+                } catch (error) {
+                    console.error('Failed to save score:', error);
+                }
             }
+        } else if (winner === null) {
+            currentScore = 10; // Fixed score for draw
+            resultMessage = `😐 It's a Draw! +10 points (streak reset)`;
         } else {
-            if (winner === playerMark) {
-                setScore(prev => prev + 20);
-                setStreak(prev => prev + 1);
-                result = 'win';
-                setMessage(`🎉 ${winner} Wins! Streak increased!`);
-            } else if (winner) {
-                setStreak(0);
-                setMessage(`❌ ${winner} Wins! Streak reset!`);
-            } else {
-                setMessage("😐 It's a Draw!");
-                result = 'draw';
-            }
+            resultMessage = "❌ Bot Wins! Streak reset!";
         }
 
-        if (!userId) return;
+        setMessage(resultMessage);
+        setGameState(prev => ({
+            ...prev,
+            currentScore: currentScore,
+            currentStreak: winner === 'O' ? prev.currentStreak + 1 : 0
+        }));
         
-        try {
-            await ScoreService.saveScore('tictactoe', userId, result);
-            setRefreshLeaderboard(prev => prev + 1);
-        } catch (error) {
-            console.error('Failed to save score:', error);
-        }
-    }, [userId, mode, playerMark]);
+        setRefreshLeaderboard(prev => prev + 1);
+    }, [gameState, userId]);
 
     const checkWinner = useCallback((boardState: string[], mark: string): boolean => {
         const winPatterns = [
@@ -107,14 +173,14 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
         setBoard(newBoard);
 
         if (checkWinner(newBoard, currentPlayer)) {
-            setWinner(`${currentPlayer} wins!`);
-            handleGameEnd('win');
+            setWinner(currentPlayer);
+            handleGameEnd(currentPlayer);
             return;
         }
 
         if (newBoard.every((cell) => cell !== "")) {
-            setWinner("Draw!");
-            handleGameEnd('draw');
+            setWinner(null);
+            handleGameEnd(null);
             return;
         }
 
@@ -129,64 +195,17 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
     }, [board, minimax, makeMove]);
 
     useEffect(() => {
-        if (mode === "vsBot" && currentPlayer === "X" && !winner) {
+        if (currentPlayer === "X" && !winner) {
             botMove();
         }
-    }, [currentPlayer, mode, winner, botMove]);
-
-    const selectMode = (selectedMode: string) => {
-        setMode(selectedMode);
-        setBoard(Array(9).fill(""));
-        setWinner(null);
-        setGameOver(false);
-        if (selectedMode === 'vsBot') {
-            setPlayerMark('O');
-        }
-        setMessage(selectedMode === 'vsBot' ? "Choose who goes first!" : "Choose your mark (X or O)!");
-    };
-
-    const chooseMark = (mark: string) => {
-        setPlayerMark(mark);
-        setCurrentPlayer('O');
-        setMessage(`You are ${mark}. Game started!`);
-    };
-
-    const renderMarkSelection = () => (
-        <div className="text-center mb-4">
-            <p className="text-lg text-gray-300 mb-2">Choose your mark:</p>
-            <div className="flex gap-4 justify-center">
-                <button
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
-                    onClick={() => chooseMark('O')}
-                >
-                    O
-                </button>
-                <button
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
-                    onClick={() => chooseMark('X')}
-                >
-                    X
-                </button>
-            </div>
-        </div>
-    );
+    }, [currentPlayer, winner, botMove]);
 
     const startGame = (playerGoesFirst: boolean) => {
+        setBoard(Array(9).fill(""));
         setCurrentPlayer(playerGoesFirst ? "O" : "X");
         setWinner(null);
-    };
-
-    const start1v1 = (playerSelected: string) => {
-        setCurrentPlayer(playerSelected);
-        setWinner(null);
-    };
-
-    const resetGame = () => {
-        setBoard(["", "", "", "", "", "", "", "", ""]);
-        setCurrentPlayer("O");
-        setMode("");
-        setWinner(null);
-        setRefreshLeaderboard(prev => prev + 1);
+        setGameOver(false);
+        setMessage(playerGoesFirst ? "Your turn (O)" : "Bot's turn (X)");
     };
 
     return (
@@ -198,39 +217,18 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
                     <div className="grid grid-cols-2 gap-4 w-full max-w-md text-center mb-4">
                         <div className="bg-gray-700 p-3 rounded-lg">
                             <p className="text-gray-300">💯 Score</p>
-                            <p className="text-2xl text-white">{score}</p>
+                            <p className="text-2xl text-white">{gameState.currentScore}</p>
                         </div>
                         <div className="bg-gray-700 p-3 rounded-lg">
                             <p className="text-gray-300">🔥 Streak</p>
-                            <p className="text-2xl text-white">{streak}</p>
+                            <p className="text-2xl text-white">{gameState.currentStreak}</p>
                         </div>
                     </div>
 
                     <p className="text-lg text-gray-300 mb-4">{message}</p>
 
-                    {!mode && (
+                    {!winner && board.every(cell => cell === "") && (
                         <div className="mb-6 flex flex-col items-center">
-                            <p className="text-lg text-gray-300 mb-4">Choose your mode:</p>
-                            <div className="flex gap-4">
-                                <button
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                    onClick={() => selectMode("vsBot")}
-                                >
-                                    VS Bot
-                                </button>
-                                <button
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                    onClick={() => selectMode("1v1")}
-                                >
-                                    1v1
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {mode === "vsBot" && !winner && board.every(cell => cell === "") && (
-                        <div className="mb-6 flex flex-col items-center">
-                            <p className="text-lg text-gray-300 mb-4">Who plays first?</p>
                             <div className="flex gap-4">
                                 <button
                                     className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
@@ -248,52 +246,27 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
                         </div>
                     )}
 
-                    {mode === "1v1" && !winner && board.every(cell => cell === "") && (
-                        <div className="mb-6 flex flex-col items-center">
-                            <p className="text-lg text-gray-300 mb-4">Choose your mark:</p>
-                            <div className="flex gap-4">
-                                <button
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                    onClick={() => start1v1("X")}
-                                >
-                                    Player X
-                                </button>
-                                <button
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                    onClick={() => start1v1("O")}
-                                >
-                                    Player O
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                        {board.map((cell, index) => (
+                            <button
+                                key={index}
+                                className={`w-20 h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 ${
+                                    cell ? 'border-purple-600' : 'border-gray-700'
+                                } rounded-lg hover:bg-gray-800 transition-colors`}
+                                onClick={() => makeMove(index)}
+                                disabled={!!cell || !!winner || currentPlayer === 'X'}
+                                aria-label={`Cell ${index + 1}`}
+                            >
+                                {cell}
+                            </button>
+                        ))}
+                    </div>
 
-                    {mode === '1v1' && !playerMark && renderMarkSelection()}
-
-                    {mode && !winner && (
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            {board.map((cell, index) => (
-                                <button
-                                    key={`cell-${Math.floor(index/3)}-${index%3}`}
-                                    className={`w-20 h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 ${
-                                        cell ? 'border-purple-600' : 'border-gray-700'
-                                    } rounded-lg hover:bg-gray-800 transition-colors`}
-                                    onClick={() => makeMove(index)}
-                                    disabled={!!cell || !!winner}
-                                    aria-label={`Cell ${index + 1}`}
-                                >
-                                    {cell}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {winner && (
+                    {gameOver && (
                         <div className="text-center">
-                            <p className="text-xl font-bold text-green-400 mb-4">{winner}</p>
                             <button
                                 className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                onClick={resetGame}
+                                onClick={() => startGame(true)}
                             >
                                 Play Again
                             </button>

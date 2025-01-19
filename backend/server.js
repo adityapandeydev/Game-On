@@ -1,33 +1,30 @@
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/auth');
-const leaderboardRoutes = require('./routes/leaderboard');
-const trendingRoutes = require('./routes/trending');
-const recentlyPlayedRoutes = require('./routes/recentlyPlayed');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'x-auth-token']
+    origin: 'http://localhost:5173', // Your frontend URL
+    credentials: true
 }));
-app.use(express.json());  // Parse JSON body data
+app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/trending', trendingRoutes);
-app.use('/api/recently-played', recentlyPlayedRoutes);
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/gamestats', require('./routes/gamestats'));
 
-// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => {
+        console.log('Connected to MongoDB');
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    })
+    .catch(err => console.error('MongoDB connection error:', err));

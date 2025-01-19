@@ -9,8 +9,9 @@ export interface GameScore {
 export interface UserGameStats {
     userId: string;
     gameId: string;
-    highestScore: number;
+    currentScore: number;
     currentStreak: number;
+    highestScore: number;
     totalGamesPlayed: number;
     wins: number;
     draws: number;

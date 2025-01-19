@@ -38,12 +38,6 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
         });
     };
 
-    const trendingGames = [
-        { id: "t1", title: "Game 1" },
-        { id: "t2", title: "Game 2" },
-        { id: "t3", title: "Game 3" },
-    ];
-
     const genres = [
         {
             name: "Puzzle",
@@ -224,15 +218,9 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
                         </div>
                     </section>
 
-                    {/* Recently Played Section */}
-                    <section id="recently-played" className="scroll-mt-16">
-                        <h2 className="text-2xl font-bold mb-4">Recently Played</h2>
-                        <RecentlyPlayed />
-                    </section>
 
                     {/* Trending Section */}
-                    <section id="trending" className="scroll-mt-16">
-                        <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
+                    <section id="trending" className="scroll-mt-16 mt-8">
                         <TrendingGames />
                     </section>
 

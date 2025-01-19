@@ -6,45 +6,33 @@ const ReviewSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    username: {
+    gameId: {
         type: String,
         required: true
     },
-    gameId: {
+    gameName: {
         type: String,
-        required: function() {
-            return this.reviewType === 'game';
-        }
+        required: true
     },
-    reviewText: {
-        type: String,
-        required: true,
-        minlength: 10,
-        maxlength: 1000
-    },
-    starRating: {
+    rating: {
         type: Number,
         required: true,
         min: 1,
         max: 5
     },
-    reviewType: {
+    comment: {
         type: String,
-        enum: ['game', 'website'],
-        required: true
+        required: true,
+        maxlength: 500
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
     }
-}, {
-    timestamps: true
 });
 
-// Ensure one review per user per game/website
-ReviewSchema.index(
-    { userId: 1, gameId: 1, reviewType: 1 }, 
-    { unique: true }
-);
-
-// Index for faster queries
-ReviewSchema.index({ gameId: 1, reviewType: 1 });
-ReviewSchema.index({ starRating: -1 });
+// Index for efficient querying
+ReviewSchema.index({ gameId: 1, timestamp: -1 });
+ReviewSchema.index({ userId: 1, timestamp: -1 });
 
 module.exports = mongoose.model('Review', ReviewSchema); 

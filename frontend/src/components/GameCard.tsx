@@ -18,7 +18,6 @@ const GameCard: React.FC<GameCardProps> = ({ title }) => {
         "Quantum Guess": { type: "video", src: "/Math Quiz.mp4"},
         "Geo Quest": { type: "video", src: "/CapitalCities.mp4" },
         "TypeStorm": { type: "gif", src: "/typing2.gif" },
-        "Sliding Puzzle": { type: "video", src: "/SlidingPuzzle.mp4" },
         "Tetris": { type: "gif", src: "/tetris1.gif" },
         "Sliding Puzzle": { type: "gif", src: "/sliding puzzle.gif" },
     };

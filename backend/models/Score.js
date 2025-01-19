@@ -8,21 +8,23 @@ const ScoreSchema = new mongoose.Schema({
     },
     gameId: {
         type: String,
-        required: true,
-        enum: ['tictactoe', 'connect4', 'guessmynumber', 'piggame']
+        required: true
     },
     score: {
         type: Number,
         required: true
     },
-    streak: {
-        type: Number,
-        default: 0
+    gameName: {
+        type: String,
+        required: true
     },
     timestamp: {
         type: Date,
         default: Date.now
     }
 });
+
+// Create compound index for userId and gameId
+ScoreSchema.index({ userId: 1, gameId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Score', ScoreSchema); 
