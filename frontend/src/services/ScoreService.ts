@@ -1,4 +1,4 @@
-import { GameScore, UserGameStats, GameResult } from '../types/game';
+import type { GameScore, UserGameStats, GameResult } from '../types/game';
 
 export class ScoreService {
     private static readonly SCORING_RULES = {

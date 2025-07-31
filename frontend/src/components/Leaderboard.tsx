@@ -15,10 +15,11 @@ interface Score {
 }
 
 interface LeaderboardProps {
-    selectedGame: string;
+    gameId: string;
+    refreshTrigger: number;
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ selectedGame }) => {
+const Leaderboard: React.FC<LeaderboardProps> = ({ gameId }) => {
     const [leaderboardData, setLeaderboardData] = useState<Score[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,8 +39,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ selectedGame }) => {
     };
 
     useEffect(() => {
-        fetchLeaderboard(selectedGame);
-    }, [selectedGame]);
+        fetchLeaderboard(gameId);
+    }, [gameId]);
 
     const getMedalIcon = (position: number) => {
         switch (position) {

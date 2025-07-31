@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import GameCard from "./GameCard";
 import TrendingGames from './TrendingGames';
-import RecentlyPlayed from './RecentlyPlayed';
 import { FaArrowUp } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useSearch } from '../context/SearchContext';
@@ -108,8 +107,8 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
 
     const destinationText = "Your ultimate gaming destination".toUpperCase().split(' ');
 
-    const scrollToRecentlyPlayed = () => {
-        const element = document.getElementById('recently-played');
+    const scrollToTrending = () => {
+        const element = document.getElementById('trending');
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
         }
@@ -193,7 +192,7 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
 
                                 {/* Transparent Get Started Button */}
                                 <motion.button
-                                    onClick={scrollToRecentlyPlayed}
+                                    onClick={scrollToTrending}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 4 }}

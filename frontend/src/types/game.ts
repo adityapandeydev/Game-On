@@ -34,4 +34,4 @@ export interface GlobalLeaderboardEntry {
     };
 }
 
-export type GameResult = 'win' | 'draw' | 'lose'; 
+export type GameResult = 20 | 0; 

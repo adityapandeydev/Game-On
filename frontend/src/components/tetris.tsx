@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ScoreService } from "../services/ScoreService";
-import { GameResult } from "../types/game";
+import type { GameResult } from "../types/game";
 import Leaderboard from './Leaderboard';
 
 interface TetrisProps {

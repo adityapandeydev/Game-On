@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { ScoreService } from "../services/ScoreService";
-import { GameResult } from "../types/game";
+import type { GameResult } from "../types/game";
 import Leaderboard from './Leaderboard';
 
 interface Difficulty {

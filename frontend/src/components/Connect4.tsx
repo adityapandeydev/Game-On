@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { ScoreService } from "../services/ScoreService";
-import { GameResult } from "../types/game";
+import type { GameResult } from "../types/game";
 import Leaderboard from './Leaderboard';
 
 interface Connect4Props {
