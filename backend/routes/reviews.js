@@ -1,109 +1,123 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const Review = require('../models/Review');
+const { query } = require('../db/postgres');
 
-// Get all reviews for a game
-router.get('/game/:gameId', async (req, res) => {
+// Get platform / general reviews
+router.get('/', async (req, res) => {
     try {
-        const reviews = await Review.find({ gameId: req.params.gameId })
-            .sort({ timestamp: -1 })
-            .populate('userId', 'name')
-            .lean();
-
-        res.json(reviews);
+        const sql = `
+            SELECT 
+                r.id as _id,
+                r.id,
+                r.game_id as "gameId",
+                r.game_name as "gameName",
+                r.rating,
+                r.rating as "starRating",
+                r.comment,
+                r.comment as "reviewText",
+                r.created_at as timestamp,
+                r.created_at as "createdAt",
+                json_build_object('id', u.id, 'name', u.name) as "userId",
+                u.name as username
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            ORDER BY r.created_at DESC
+            LIMIT 50;
+        `;
+        const result = await query(sql);
+        res.json(result.rows);
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Error fetching reviews:', err);
+        res.status(500).json({ message: 'Server error loading reviews' });
     }
 });
 
-// Get user's reviews
-router.get('/user/:userId', auth, async (req, res) => {
+// Get all reviews for a specific game
+router.get('/game/:gameId', async (req, res) => {
     try {
-        const reviews = await Review.find({ userId: req.params.userId })
-            .sort({ timestamp: -1 })
-            .lean();
-
-        res.json(reviews);
+        const sql = `
+            SELECT 
+                r.id as _id,
+                r.id,
+                r.game_id as "gameId",
+                r.game_name as "gameName",
+                r.rating,
+                r.rating as "starRating",
+                r.comment,
+                r.comment as "reviewText",
+                r.created_at as timestamp,
+                r.created_at as "createdAt",
+                json_build_object('id', u.id, 'name', u.name) as "userId",
+                u.name as username
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.game_id = $1
+            ORDER BY r.created_at DESC
+            LIMIT 50;
+        `;
+        const result = await query(sql, [req.params.gameId]);
+        res.json(result.rows);
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Error fetching game reviews:', err);
+        res.status(500).json({ message: 'Server error loading reviews' });
     }
 });
 
 // Submit a review
 router.post('/submit', auth, async (req, res) => {
     try {
-        const { gameId, gameName, rating, comment } = req.body;
-        const userId = req.user.id;
+        const { gameId, gameName, rating, comment, reviewText } = req.body;
+        const userId = parseInt(req.user.id, 10);
+        const effectiveComment = comment || reviewText;
+        const effectiveRating = rating || 5;
 
-        // Check if user already reviewed this game
-        const existingReview = await Review.findOne({ userId, gameId });
-        if (existingReview) {
-            return res.status(400).json({ msg: 'You have already reviewed this game' });
+        if (!effectiveComment) {
+            return res.status(400).json({ msg: 'Review comment is required' });
         }
 
-        const newReview = new Review({
+        const sql = `
+            INSERT INTO reviews (user_id, game_id, game_name, rating, comment)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id, user_id, game_id, game_name, rating, comment, created_at;
+        `;
+
+        const result = await query(sql, [
             userId,
-            gameId,
-            gameName,
-            rating,
-            comment
-        });
+            gameId || 'website',
+            gameName || 'Platform',
+            Math.min(5, Math.max(1, effectiveRating)),
+            effectiveComment
+        ]);
 
-        await newReview.save();
-        res.json(newReview);
+        res.json(result.rows[0]);
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Update a review
-router.put('/:reviewId', auth, async (req, res) => {
-    try {
-        const { rating, comment } = req.body;
-        const review = await Review.findById(req.params.reviewId);
-
-        if (!review) {
-            return res.status(404).json({ msg: 'Review not found' });
-        }
-
-        if (review.userId.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'Not authorized' });
-        }
-
-        review.rating = rating;
-        review.comment = comment;
-        await review.save();
-
-        res.json(review);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Error submitting review:', err);
+        res.status(500).json({ message: 'Server error saving review' });
     }
 });
 
 // Delete a review
 router.delete('/:reviewId', auth, async (req, res) => {
     try {
-        const review = await Review.findById(req.params.reviewId);
+        const reviewId = parseInt(req.params.reviewId, 10);
+        const userId = parseInt(req.user.id, 10);
 
-        if (!review) {
+        const reviewCheck = await query('SELECT user_id FROM reviews WHERE id = $1', [reviewId]);
+        if (reviewCheck.rows.length === 0) {
             return res.status(404).json({ msg: 'Review not found' });
         }
 
-        if (review.userId.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'Not authorized' });
+        if (reviewCheck.rows[0].user_id !== userId) {
+            return res.status(401).json({ msg: 'Not authorized to delete this review' });
         }
 
-        await review.remove();
-        res.json({ msg: 'Review removed' });
+        await query('DELETE FROM reviews WHERE id = $1', [reviewId]);
+        res.json({ msg: 'Review removed successfully' });
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Error deleting review:', err);
+        res.status(500).json({ message: 'Server error deleting review' });
     }
 });
 
-module.exports = router; 
+module.exports = router;

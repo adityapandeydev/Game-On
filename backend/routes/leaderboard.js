@@ -1,138 +1,144 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const Score = require('../models/Score');
-const User = require('../models/User');
+const { query } = require('../db/postgres');
 
 // Get global rankings (sum of highest scores per game for each user)
 router.get('/global', async (req, res) => {
     try {
-        // Aggregate pipeline to get total scores
-        const globalRankings = await Score.aggregate([
-            // First group by userId and gameId to get max score for each game
-            {
-                $group: {
-                    _id: {
-                        userId: '$userId',
-                        gameId: '$gameId'
-                    },
-                    maxScore: { $max: '$score' }
-                }
-            },
-            // Then group by userId to sum up all max scores
-            {
-                $group: {
-                    _id: '$_id.userId',
-                    totalScore: { $sum: '$maxScore' }
-                }
-            },
-            // Look up user details
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'userDetails'
-                }
-            },
-            // Unwind the user details array
-            { $unwind: '$userDetails' },
-            // Project the final format
-            {
-                $project: {
-                    _id: 1,
-                    userId: {
-                        _id: '$_id',
-                        name: '$userDetails.name'
-                    },
-                    score: '$totalScore',
-                    timestamp: new Date()
-                }
-            },
-            // Sort by total score descending
-            { $sort: { score: -1 } },
-            // Limit to top 10
-            { $limit: 10 }
-        ]);
+        const sql = `
+            SELECT 
+                u.id as user_id,
+                u.name as username,
+                SUM(s.score)::int as "totalScore",
+                SUM(s.score)::int as score,
+                COUNT(DISTINCT s.game_id)::int as "gamesPlayed",
+                MAX(s.updated_at) as timestamp
+            FROM scores s
+            JOIN users u ON s.user_id = u.id
+            GROUP BY u.id, u.name
+            ORDER BY "totalScore" DESC
+            LIMIT 10;
+        `;
+        const result = await query(sql);
 
-        res.json(globalRankings);
+        const formatted = result.rows.map((row, idx) => ({
+            _id: row.user_id.toString(),
+            rank: idx + 1,
+            userId: {
+                _id: row.user_id.toString(),
+                id: row.user_id.toString(),
+                name: row.username
+            },
+            username: row.username,
+            score: row.score,
+            totalScore: row.totalScore,
+            gamesPlayed: row.gamesPlayed,
+            timestamp: row.timestamp || new Date().toISOString()
+        }));
+
+        res.json(formatted);
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Get global leaderboard for a specific game
-router.get('/:gameId', async (req, res) => {
-    if (req.params.gameId === 'global') return;
-    try {
-        const leaderboard = await Score.find({ gameId: req.params.gameId })
-            .sort({ score: -1 })
-            .limit(10)
-            .populate('userId', 'name')
-            .lean();
-
-        res.json(leaderboard);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Error fetching global leaderboard:', err);
+        res.status(500).json({ message: 'Server error loading global rankings' });
     }
 });
 
 // Get user's personal best scores
 router.get('/user/:userId', auth, async (req, res) => {
     try {
-        const scores = await Score.find({ userId: req.params.userId })
-            .sort({ score: -1 })
-            .limit(10)
-            .populate('userId', 'name')
-            .lean();
-
-        res.json(scores);
+        const sql = `
+            SELECT 
+                s.id as _id,
+                s.game_id as "gameId",
+                s.game_name as "gameName",
+                s.score,
+                s.streak,
+                s.updated_at as timestamp,
+                json_build_object('id', u.id, 'name', u.name) as "userId",
+                u.name as username
+            FROM scores s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.user_id = $1
+            ORDER BY s.score DESC
+            LIMIT 10;
+        `;
+        const result = await query(sql, [req.params.userId]);
+        res.json(result.rows);
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error('Error fetching user scores:', err);
+        res.status(500).json({ message: 'Server error loading user scores' });
     }
 });
 
-// Submit new score
+// Submit new score (Atomic PostgreSQL Upsert)
 router.post('/submit', auth, async (req, res) => {
     try {
-        const { gameId, score, gameName } = req.body;
-        const userId = req.user.id;
+        const { gameId, score, gameName, streak = 0 } = req.body;
+        const userId = parseInt(req.user.id, 10);
 
-        // Find existing score
-        const existingScore = await Score.findOne({ userId, gameId });
-
-        if (existingScore) {
-            // Only update if new score is higher
-            if (score > existingScore.score) {
-                existingScore.score = score;
-                existingScore.timestamp = new Date();
-                await existingScore.save();
-                return res.json(existingScore);
-            } else {
-                return res.status(400).json({ 
-                    msg: 'New score is not higher than existing score',
-                    currentBest: existingScore.score 
-                });
-            }
+        if (!gameId || typeof score !== 'number') {
+            return res.status(400).json({ msg: 'gameId and numeric score are required' });
         }
 
-        // Create new score record
-        const newScore = new Score({
+        const sql = `
+            INSERT INTO scores (user_id, game_id, game_name, score, streak, updated_at)
+            VALUES ($1, $2, $3, $4, $5, NOW())
+            ON CONFLICT (user_id, game_id)
+            DO UPDATE SET 
+                score = CASE 
+                    WHEN EXCLUDED.score > scores.score THEN EXCLUDED.score 
+                    ELSE scores.score 
+                END,
+                streak = EXCLUDED.streak,
+                game_name = EXCLUDED.game_name,
+                updated_at = NOW()
+            RETURNING id, user_id, game_id, score, streak, updated_at;
+        `;
+
+        const result = await query(sql, [
             userId,
             gameId,
+            gameName || gameId,
             score,
-            gameName
-        });
+            streak
+        ]);
 
-        await newScore.save();
-        res.json(newScore);
+        res.json(result.rows[0]);
     } catch (err) {
         console.error('Error saving score:', err);
-        res.status(500).send('Server Error');
+        res.status(500).json({ message: 'Server error saving score' });
     }
 });
 
-module.exports = router; 
+// Get leaderboard for a specific game
+router.get('/:gameId', async (req, res) => {
+    const { gameId } = req.params;
+    if (gameId === 'global') {
+        return res.redirect('/api/leaderboard/global');
+    }
+
+    try {
+        const sql = `
+            SELECT 
+                s.id as _id,
+                s.score,
+                s.game_name as "gameName",
+                s.updated_at as timestamp,
+                json_build_object('id', u.id, '_id', u.id, 'name', u.name) as "userId",
+                u.name as username
+            FROM scores s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.game_id = $1
+            ORDER BY s.score DESC
+            LIMIT 10;
+        `;
+        const result = await query(sql, [gameId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(`Error fetching leaderboard for ${gameId}:`, err);
+        res.status(500).json({ message: 'Server error loading game leaderboard' });
+    }
+});
+
+module.exports = router;
