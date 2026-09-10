@@ -24,8 +24,8 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isLoggedIn, onLogout }
     };
 
     return (
-        <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-purple-500/20 px-4 sm:px-8 py-3.5 transition-all shadow-xl">
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-purple-500/20 px-4 sm:px-6 lg:px-8 py-3.5 transition-all shadow-xl w-full">
+            <div className="w-full flex items-center justify-between gap-4 lg:gap-8">
                 {/* Left: Sidebar Toggle & Brand Logo */}
                 <div className="flex items-center gap-3">
                     <button
@@ -47,7 +47,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isLoggedIn, onLogout }
                 </div>
 
                 {/* Center: Search Bar */}
-                <div className="flex-1 max-w-md mx-2 hidden sm:block">
+                <div className="flex-1 max-w-lg lg:max-w-xl mx-2 hidden sm:block">
                     <div className="relative">
                         <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm" />
                         <input
