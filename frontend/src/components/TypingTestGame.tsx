@@ -108,7 +108,7 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
             if (result === 'win' && score > highScore) {
                 setHighScore(score);
             }
-            await ScoreService.saveScore('typingtest', userId, result);
+            await ScoreService.saveScore('typestorm', userId, result, 'TypeStorm');
             setRefreshLeaderboard(prev => prev + 1);
             setMessage(result === 'win' ? "🎉 Well done! Try another difficulty?" : "⏰ Time's up!");
         } catch (error) {
@@ -244,7 +244,7 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
                 </div>
                 
                 <div className="mt-8">
-                    <Leaderboard gameId="typingtest" refreshTrigger={refreshLeaderboard} />
+                    <Leaderboard gameId="typestorm" refreshTrigger={refreshLeaderboard} />
                 </div>
             </div>
         </div>
