@@ -65,10 +65,10 @@ router.get('/game/:gameId', async (req, res) => {
 });
 
 // Submit a review
-router.post('/submit', auth, async (req, res) => {
+const handleReviewSubmit = async (req, res) => {
     try {
         const { gameId, gameName, rating, comment, reviewText } = req.body;
-        const userId = parseInt(req.user.id, 10);
+        const userId = parseInt(req.user.id || req.user.userId, 10);
         const effectiveComment = comment || reviewText;
         const effectiveRating = rating || 5;
 
@@ -95,7 +95,10 @@ router.post('/submit', auth, async (req, res) => {
         console.error('Error submitting review:', err);
         res.status(500).json({ message: 'Server error saving review' });
     }
-});
+};
+
+router.post('/', auth, handleReviewSubmit);
+router.post('/submit', auth, handleReviewSubmit);
 
 // Delete a review
 router.delete('/:reviewId', auth, async (req, res) => {

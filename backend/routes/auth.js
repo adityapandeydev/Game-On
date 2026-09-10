@@ -8,10 +8,11 @@ require('dotenv').config();
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'game_on_super_secret_jwt_key_2026';
 
-// Register Route
-router.post('/signup', async (req, res) => {
+// Register/Signup Route
+const handleRegister = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const name = req.body.name || req.body.username;
+        const { email, password } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ msg: 'Please provide all required fields' });
@@ -51,7 +52,10 @@ router.post('/signup', async (req, res) => {
         console.error('Signup error:', err);
         res.status(500).json({ msg: 'Server error during registration' });
     }
-});
+};
+
+router.post('/signup', handleRegister);
+router.post('/register', handleRegister);
 
 // Login Route
 router.post('/login', async (req, res) => {

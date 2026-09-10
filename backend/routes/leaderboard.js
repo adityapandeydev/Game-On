@@ -72,10 +72,10 @@ router.get('/user/:userId', auth, async (req, res) => {
 });
 
 // Submit new score (Atomic PostgreSQL Upsert)
-router.post('/submit', auth, async (req, res) => {
+const handleScoreSubmit = async (req, res) => {
     try {
         const { gameId, score, gameName, streak = 0 } = req.body;
-        const userId = parseInt(req.user.id, 10);
+        const userId = parseInt(req.user.id || req.user.userId, 10);
 
         if (!gameId || typeof score !== 'number') {
             return res.status(400).json({ msg: 'gameId and numeric score are required' });
@@ -109,7 +109,10 @@ router.post('/submit', auth, async (req, res) => {
         console.error('Error saving score:', err);
         res.status(500).json({ message: 'Server error saving score' });
     }
-});
+};
+
+router.post('/submit', auth, handleScoreSubmit);
+router.post('/scores', auth, handleScoreSubmit);
 
 // Get leaderboard for a specific game
 router.get('/:gameId', async (req, res) => {
