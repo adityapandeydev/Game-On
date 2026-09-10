@@ -19,7 +19,6 @@ func NewRouter(pool *pgxpool.Pool, jwtSecret string) http.Handler {
 
 	// Essential Middlewares
 	r.Use(chimw.RequestID)
-	r.Use(chimw.RealIP)
 	r.Use(chimw.Logger)
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Compress(5))
