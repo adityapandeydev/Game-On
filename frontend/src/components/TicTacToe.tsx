@@ -169,69 +169,92 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] py-8">
-            <div className="container mx-auto px-4 max-w-4xl h-full">
-                <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                    <h2 className="text-3xl font-bold text-white mb-6">Tic Tac Toe</h2>
+        <div className="min-h-[calc(100vh-4rem)] py-10 px-4">
+            <div className="container mx-auto max-w-4xl space-y-10">
+                <div className="glass-panel p-8 sm:p-10 rounded-3xl max-w-xl mx-auto relative overflow-hidden border border-purple-500/20 shadow-2xl">
+                    {/* Ambient Glows */}
+                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-md text-center mb-4">
-                        <div className="bg-gray-700 p-3 rounded-lg">
-                            <p className="text-gray-300">💯 Score</p>
-                            <p className="text-2xl text-white">{gameState.currentScore}</p>
-                        </div>
-                        <div className="bg-gray-700 p-3 rounded-lg">
-                            <p className="text-gray-300">🔥 Streak</p>
-                            <p className="text-2xl text-white">{gameState.currentStreak}</p>
-                        </div>
-                    </div>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-widest mb-3">
+                            Minimax Tactical AI
+                        </span>
+                        <h2 className="text-4xl font-extrabold font-gaming text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-500 tracking-wider mb-6">
+                            TIC-TAC-TOE
+                        </h2>
 
-                    <p className="text-lg text-gray-300 mb-4">{message}</p>
-
-                    {!winner && board.every(cell => cell === "") && (
-                        <div className="mb-6 flex flex-col items-center">
-                            <div className="flex gap-4">
-                                <button
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                    onClick={() => startGame(true)}
-                                >
-                                    You (O)
-                                </button>
-                                <button
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                    onClick={() => startGame(false)}
-                                >
-                                    Bot (X)
-                                </button>
+                        {/* Score and Streak Badges */}
+                        <div className="grid grid-cols-2 gap-4 w-full max-w-sm text-center mb-6">
+                            <div className="p-4 rounded-2xl bg-black/40 border border-purple-500/20 backdrop-blur-md">
+                                <p className="text-xs text-purple-300 uppercase tracking-wider font-semibold">Total Points</p>
+                                <p className="text-3xl font-extrabold font-gaming text-white mt-1">{gameState.currentScore}</p>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-black/40 border border-pink-500/20 backdrop-blur-md">
+                                <p className="text-xs text-pink-300 uppercase tracking-wider font-semibold">Win Streak</p>
+                                <p className="text-3xl font-extrabold font-gaming text-pink-400 mt-1 flex items-center justify-center gap-1">
+                                    <span>🔥</span> {gameState.currentStreak}
+                                </p>
                             </div>
                         </div>
-                    )}
 
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        {board.map((cell, index) => (
-                            <button
-                                key={index}
-                                className={`w-20 h-20 flex items-center justify-center text-2xl font-bold bg-gray-900 border-4 ${
-                                    cell ? 'border-purple-600' : 'border-gray-700'
-                                } rounded-lg hover:bg-gray-800 transition-colors`}
-                                onClick={() => makeMove(index)}
-                                disabled={!!cell || !!winner || currentPlayer === 'X'}
-                                aria-label={`Cell ${index + 1}`}
-                            >
-                                {cell}
-                            </button>
-                        ))}
-                    </div>
+                        {/* Status Message */}
+                        <div className="p-3 px-6 rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-200 text-sm font-medium mb-8 text-center shadow-inner">
+                            {message}
+                        </div>
 
-                    {gameOver && (
-                        <div className="text-center">
+                        {/* First Move Selector */}
+                        {!winner && board.every(cell => cell === "") && (
+                            <div className="mb-8 flex flex-col items-center gap-3">
+                                <span className="text-xs text-gray-400 uppercase tracking-wider">Choose who takes first move:</span>
+                                <div className="flex gap-4">
+                                    <button
+                                        className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-gaming text-sm font-bold shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105"
+                                        onClick={() => startGame(true)}
+                                    >
+                                        You First (O)
+                                    </button>
+                                    <button
+                                        className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white rounded-xl font-gaming text-sm font-bold shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all transform hover:scale-105"
+                                        onClick={() => startGame(false)}
+                                    >
+                                        Bot First (X)
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3x3 Game Board */}
+                        <div className="grid grid-cols-3 gap-3.5 p-4 rounded-2xl bg-black/60 border border-purple-500/30 shadow-[0_0_30px_rgba(147,51,234,0.15)] mb-8">
+                            {board.map((cell, index) => (
+                                <button
+                                    key={index}
+                                    className={`w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center text-4xl sm:text-5xl font-gaming font-extrabold rounded-xl transition-all duration-300 ${
+                                        cell === "O"
+                                            ? "text-cyan-400 bg-cyan-950/30 border-2 border-cyan-400/80 shadow-[0_0_20px_rgba(34,211,238,0.4)]"
+                                            : cell === "X"
+                                            ? "text-pink-500 bg-pink-950/30 border-2 border-pink-500/80 shadow-[0_0_20px_rgba(236,72,153,0.4)]"
+                                            : "bg-gray-900/60 border border-purple-500/20 hover:border-purple-400/60 hover:bg-purple-900/20 hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]"
+                                    }`}
+                                    onClick={() => makeMove(index)}
+                                    disabled={!!cell || !!winner || currentPlayer === 'X'}
+                                    aria-label={`Cell ${index + 1}`}
+                                >
+                                    {cell}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Play Again Button */}
+                        {gameOver && (
                             <button
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                className="px-8 py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-gaming font-bold shadow-[0_0_25px_rgba(168,85,247,0.5)] transform hover:scale-105 transition-all"
                                 onClick={() => startGame(true)}
                             >
                                 Play Again
                             </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
                 
                 <div className="mt-8">

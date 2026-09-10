@@ -31,9 +31,9 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
     };
 
     const getCellStyle = (cell: string): string => {
-        if (cell === "R") return "bg-red-600 border-red-700";
-        if (cell === "Y") return "bg-yellow-500 border-yellow-600";
-        return "bg-gray-700 border-gray-600 hover:bg-gray-600";
+        if (cell === "R") return "bg-gradient-to-br from-rose-500 to-red-600 border-2 border-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.8)] scale-95";
+        if (cell === "Y") return "bg-gradient-to-br from-amber-400 to-yellow-500 border-2 border-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.8)] scale-95";
+        return "bg-black/60 border border-indigo-500/20 hover:border-indigo-400/60 hover:bg-indigo-900/30";
     };
 
     const dropPiece = (col: number) => {
@@ -106,9 +106,11 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
     };
 
     const checkWinner = (row: number, col: number): boolean => {
-        return checkHorizontal(row, col) || 
-               checkVertical(row, col) || 
-               checkDiagonals(row, col);
+        return (
+            checkHorizontal(row, col) ||
+            checkVertical(row, col) ||
+            checkDiagonals(row, col)
+        );
     };
 
     const handleGameEnd = useCallback(async (result: GameResult) => {
@@ -123,30 +125,51 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
     }, [userId]);
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] bg-gray-900 py-8">
-            <div className="container mx-auto px-4 max-w-4xl h-full">
-                <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                    <h2 className="text-3xl font-bold text-white mb-6">Connect 4</h2>
+        <div className="min-h-[calc(100vh-4rem)] py-10 px-4">
+            <div className="container mx-auto max-w-4xl space-y-10">
+                <div className="glass-panel p-8 sm:p-10 rounded-3xl max-w-2xl mx-auto relative overflow-hidden border border-purple-500/20 shadow-2xl flex flex-col items-center">
+                    {/* Ambient Glows */}
+                    <div className="absolute -top-24 -left-24 w-52 h-52 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-24 -right-24 w-52 h-52 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
 
-                    {winner ? (
-                        <h3 className="text-xl font-bold text-green-400 mb-6">{winner} Wins!</h3>
-                    ) : (
-                        <h3 className="text-xl text-gray-300 mb-6">
-                            {currentPlayer === "R" ? "Red's" : "Yellow's"} turn
-                        </h3>
-                    )}
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-widest mb-3">
+                        Tactical 4-In-A-Row
+                    </span>
+                    <h2 className="text-4xl font-extrabold font-gaming text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-300 to-amber-300 tracking-wider mb-6">
+                        CONNECT 4
+                    </h2>
 
-                    <div className="bg-gray-900 p-4 rounded-lg mb-6">
-                        {board.map((row, rowIndex) => (
+                    {/* Turn or Winner Banner */}
+                    <div className="mb-6">
+                        {winner ? (
+                            <div className="px-6 py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-gaming text-lg font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2">
+                                <span>🏆</span> {winner} Player Wins!
+                            </div>
+                        ) : (
+                            <div className={`px-6 py-2.5 rounded-2xl border text-sm font-semibold flex items-center gap-2.5 transition-all ${
+                                currentPlayer === "R"
+                                    ? "bg-rose-500/20 border-rose-500/40 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.2)]"
+                                    : "bg-amber-500/20 border-amber-500/40 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
+                            }`}>
+                                <span className={`w-3 h-3 rounded-full ${currentPlayer === "R" ? "bg-rose-500 shadow-[0_0_10px_#f43f5e]" : "bg-amber-400 shadow-[0_0_10px_#fbbf24]"}`} />
+                                {currentPlayer === "R" ? "Red's Turn — Click a Column" : "Yellow's Turn — Click a Column"}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Arcade Grid Frame */}
+                    <div className="p-4 sm:p-5 rounded-3xl bg-indigo-950/40 border-2 border-indigo-500/30 shadow-[0_0_35px_rgba(99,102,241,0.25)] mb-8">
+                        {board.slice().reverse().map((row, rowIndex) => (
                             <div key={generateCellId(rowIndex, -1)} className="flex justify-center">
                                 {row.map((cell, colIndex) => (
                                     <button
                                         key={generateCellId(rowIndex, colIndex)}
                                         className={`
-                                            w-12 h-12 sm:w-16 sm:h-16 m-1 rounded-full border-4
-                                            transition-all duration-200 ${getCellStyle(cell)}
+                                            w-10 h-10 sm:w-14 sm:h-14 m-1 sm:m-1.5 rounded-full
+                                            transition-all duration-300 transform ${getCellStyle(cell)}
                                         `}
                                         onClick={() => dropPiece(colIndex)}
+                                        disabled={gameOver}
                                         aria-label={`Column ${colIndex + 1}`}
                                     />
                                 ))}
@@ -154,15 +177,17 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
                         ))}
                     </div>
 
+                    {/* Play Again Button */}
                     {gameOver && (
                         <button
-                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                            className="px-8 py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-gaming font-bold shadow-[0_0_25px_rgba(168,85,247,0.5)] transform hover:scale-105 transition-all"
                             onClick={resetGame}
                         >
                             Play Again
                         </button>
                     )}
                 </div>
+
                 <div className="mt-8">
                     <Leaderboard gameId="connect4" refreshTrigger={refreshLeaderboard} />
                 </div>

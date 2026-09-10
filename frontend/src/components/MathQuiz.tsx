@@ -99,74 +99,109 @@ const MathQuiz: React.FC<MathQuizProps> = ({ userId }) => {
     }, [difficulty, generateQuestion]);
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold text-white mb-6">Quantum Guess</h2>
+        <div className="min-h-[calc(100vh-4rem)] py-10 px-4">
+            <div className="container mx-auto max-w-4xl space-y-10">
+                <div className="glass-panel p-8 sm:p-10 rounded-3xl max-w-xl mx-auto relative overflow-hidden border border-purple-500/20 shadow-2xl flex flex-col items-center text-center">
+                    {/* Ambient Glows */}
+                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
 
-                {!difficulty ? (
-                    <div className="mb-6 flex flex-col items-center">
-                        <p className="text-lg text-gray-300 mb-4">Select Difficulty</p>
-                        <div className="flex gap-4">
-                            {difficulties.map((diff) => (
-                                <button
-                                    key={diff.label}
-                                    onClick={() => handleDifficultySelect(diff)}
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                                >
-                                    {diff.label}
-                                </button>
-                            ))}
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-widest mb-3">
+                        Speed Computation
+                    </span>
+                    <h2 className="text-4xl font-extrabold font-gaming text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 tracking-wider mb-6">
+                        QUANTUM GUESS
+                    </h2>
+
+                    {!difficulty ? (
+                        <div className="w-full space-y-6">
+                            <p className="text-gray-300 text-sm">Select calculation complexity:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                {difficulties.map((diff) => (
+                                    <button
+                                        key={diff.label}
+                                        onClick={() => handleDifficultySelect(diff)}
+                                        className="p-5 rounded-2xl bg-black/40 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/20 hover:scale-105 transition-all text-center group"
+                                    >
+                                        <p className="font-gaming text-lg font-bold text-white group-hover:text-cyan-300">{diff.label}</p>
+                                        <p className="text-xs text-gray-400 mt-1">Numbers: 1 – {diff.range}</p>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <>
-                        <p className="text-lg text-gray-300 mb-6">
-                            (Solve the sum of {number1} + {number2})
-                        </p>
-
-                        <div className="flex flex-col items-center gap-6 mb-6">
-                            <div className="w-20 h-20 flex items-center justify-center text-4xl font-bold bg-gray-900 border-4 border-purple-600 rounded-lg">
-                                ?
+                    ) : (
+                        <div className="w-full flex flex-col items-center">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-medium mb-6">
+                                <span>Mode: {difficulty.label}</span>
+                                <button 
+                                    onClick={() => setDifficulty(null)} 
+                                    className="ml-1 text-gray-400 hover:text-white underline text-[11px]"
+                                >
+                                    Change
+                                </button>
                             </div>
 
-                            <div className="flex gap-4">
+                            {/* Holographic Equation Card */}
+                            <div className="w-full max-w-sm p-6 rounded-2xl bg-gradient-to-br from-cyan-950/30 via-purple-950/20 to-black border-2 border-cyan-400/50 shadow-[0_0_30px_rgba(6,182,212,0.2)] mb-8">
+                                <p className="text-xs text-cyan-300 uppercase tracking-widest font-semibold mb-2">Solve Equation</p>
+                                <div className="text-4xl sm:text-5xl font-gaming font-extrabold text-white tracking-wider">
+                                    <span className="text-cyan-400">{number1}</span> + <span className="text-purple-400">{number2}</span> = <span className="text-amber-300">?</span>
+                                </div>
+                            </div>
+
+                            {/* Guess Form */}
+                            <div className="flex items-center gap-3 mb-6 w-full max-w-xs">
                                 <input
                                     type="number"
                                     value={guess}
                                     onChange={(e) => setGuess(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleCheck()}
-                                    className="w-24 px-4 py-2 bg-gray-900 text-white border-4 border-purple-600 rounded-lg text-center text-xl"
-                                    placeholder="#"
+                                    className="w-full px-4 py-3 bg-black/60 text-white font-gaming text-2xl border-2 border-cyan-500/40 focus:border-cyan-400 rounded-xl text-center outline-none shadow-inner transition-colors"
+                                    placeholder="Answer"
+                                    disabled={score === 0 || message === "🎉 Correct Answer!"}
                                 />
                                 <button
                                     onClick={handleCheck}
-                                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                                    disabled={score === 0 || message === "🎉 Correct Answer!"}
+                                    className="px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 text-white rounded-xl font-gaming font-bold shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all whitespace-nowrap"
                                 >
-                                    Check!
+                                    Solve!
                                 </button>
                             </div>
+
+                            {/* Message */}
+                            <div className="p-3 px-6 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-sm font-semibold mb-6 shadow-inner">
+                                {message}
+                            </div>
+
+                            {/* Score Stats */}
+                            <div className="grid grid-cols-2 gap-4 w-full max-w-sm text-center mb-6">
+                                <div className="p-3.5 rounded-2xl bg-black/40 border border-purple-500/20">
+                                    <p className="text-xs text-purple-300 uppercase tracking-wider font-semibold">Current Score</p>
+                                    <p className="text-2xl font-extrabold font-gaming text-white mt-0.5">💯 {score}</p>
+                                </div>
+                                <div className="p-3.5 rounded-2xl bg-black/40 border border-cyan-500/20">
+                                    <p className="text-xs text-cyan-300 uppercase tracking-wider font-semibold">High Score</p>
+                                    <p className="text-2xl font-extrabold font-gaming text-cyan-400 mt-0.5">🥇 {highScore}</p>
+                                </div>
+                            </div>
+
+                            {(score === 0 || message === "🎉 Correct Answer!") && (
+                                <button
+                                    onClick={handleAgain}
+                                    className="px-8 py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-gaming font-bold shadow-[0_0_25px_rgba(168,85,247,0.5)] transform hover:scale-105 transition-all"
+                                >
+                                    Play Again
+                                </button>
+                            )}
                         </div>
-
-                        <p className="text-xl text-gray-300 mb-6">{message}</p>
-
-                        <div className="flex flex-col items-center gap-3">
-                            <p className="text-lg text-gray-300">💯 Score: {score}</p>
-                            <p className="text-lg text-gray-300">🥇 Highscore: {highScore}</p>
-                        </div>
-
-                        {(score === 0 || message === "🎉 Correct Answer!") && (
-                            <button
-                                onClick={handleAgain}
-                                className="mt-6 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                            >
-                                Play Again
-                            </button>
-                        )}
-                    </>
-                )}
+                    )}
+                </div>
+                
+                <div className="mt-8">
+                    <Leaderboard gameId="mathquiz" refreshTrigger={refreshLeaderboard} />
+                </div>
             </div>
-            
-            <Leaderboard gameId="mathquiz" refreshTrigger={refreshLeaderboard} />
         </div>
     );
 };
