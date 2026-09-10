@@ -1,0 +1,13 @@
+{
+  "name": "game-on-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Game-On Arcade Platform",
+  "scripts": {
+    "dev": "bun --cwd frontend dev",
+    "dev:frontend": "bun --cwd frontend dev",
+    "dev:backend": "bun --cwd backend dev",
+    "build": "bun --cwd frontend build",
+    "build:frontend": "bun --cwd frontend build"
+  }
+}

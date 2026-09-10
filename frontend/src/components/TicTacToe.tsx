@@ -50,46 +50,6 @@ const TicTacToe: React.FC<TicTacToeProps> = ({ userId }) => {
         return Math.round(baseScore * multiplier);
     };
 
-    const updateGameState = async (result: 'win' | 'draw' | 'lose') => {
-        let newStreak = gameState.currentStreak;
-        let newTotalScore = gameState.currentScore;
-
-        if (result === 'win') {
-            newStreak += 1;
-            const scoreIncrease = calculateScoreIncrease(newStreak);
-            newTotalScore += scoreIncrease;
-        } else if (result === 'draw') {
-            // For draw, just award 10 points without adding to total score
-            newStreak = 0; // Reset streak on draw
-            newTotalScore = 10; // Just award 10 points for draw
-        } else {
-            // Reset streak and keep current score on loss
-            newStreak = 0;
-        }
-
-        setGameState(prev => ({
-            currentScore: newTotalScore,
-            currentStreak: newStreak,
-            highestScore: Math.max(prev.highestScore, newTotalScore)
-        }));
-
-        if (!userId) return;
-
-        try {
-            await ScoreService.saveScore('tictactoe', userId, result);
-            
-            if (newTotalScore > gameState.highestScore) {
-                try {
-                    await ScoreService.updateLeaderboard('tictactoe', userId, newTotalScore);
-                } catch (error) {
-                    console.error('Failed to update leaderboard:', error);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to save game stats:', error);
-        }
-    };
-
     const handleGameEnd = useCallback(async (winner: string | null) => {
         setGameOver(true);
         let resultMessage = "";

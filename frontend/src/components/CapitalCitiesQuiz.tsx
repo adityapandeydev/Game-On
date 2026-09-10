@@ -87,10 +87,10 @@ const CapitalCitiesQuiz: React.FC<CapitalCitiesQuizProps> = ({ userId }) => {
             return `${baseClass} bg-green-600`;
         }
         if (wrongAnswers.has(option)) {
-            return `${baseClass} bg-red-600`;
+            return `${baseClass} ${selectedOption === option ? 'bg-red-600 ring-2 ring-red-400' : 'bg-red-600'}`;
         }
         return `${baseClass} bg-purple-600 hover:bg-purple-500`;
-    }, [currentQuestion.capital, showNext, wrongAnswers]);
+    }, [currentQuestion.capital, showNext, wrongAnswers, selectedOption]);
 
     return (
         <div className="container mx-auto px-4 py-4 max-w-3xl">

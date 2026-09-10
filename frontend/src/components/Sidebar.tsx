@@ -39,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, setSidebarVisible }) => {
 
     const handleSectionClick = (section: Section) => {
         if (section === "divider") return;
+        setSidebarVisible(false);
 
         // Handle special routes first
         if (section.text === "Leaderboard") {

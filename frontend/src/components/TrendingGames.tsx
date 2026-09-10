@@ -12,26 +12,31 @@ const GAME_ROUTES: { [key: string]: string } = {
     'tictactoe': '/tictactoe',
     'connect4': '/connect4',
     'guess-number': '/guess-number',
+    'guessmynumber': '/guess-number',
     'pig-game': '/pig-game',
+    'piggame': '/pig-game',
     'math-quiz': '/math-quiz',
+    'mathquiz': '/math-quiz',
     'capital-cities': '/capital-cities',
+    'capitalcities': '/capital-cities',
     'typing-test': '/typing-test',
+    'typestorm': '/typing-test',
     'sliding-puzzle': '/sliding-puzzle',
+    'slidingpuzzle': '/sliding-puzzle',
     'tetris': '/tetris'
 };
 
 const INITIAL_TRENDING_GAMES: TrendingGame[] = [
-    { gameId: 'tictactoe', gameName: 'Tic Tac Toe', clickCount: 0 },
-    { gameId: 'connect4', gameName: 'Connect 4', clickCount: 0 },
-    { gameId: 'tetris', gameName: 'Tetris', clickCount: 0 },
-    { gameId: 'math-quiz', gameName: 'Quantum Guess', clickCount: 0 },
-    { gameId: 'capital-cities', gameName: 'Geo Quest', clickCount: 0 }
+    { gameId: 'tictactoe', gameName: 'Tic Tac Toe', clickCount: 1420 },
+    { gameId: 'connect4', gameName: 'Connect 4', clickCount: 1180 },
+    { gameId: 'tetris', gameName: 'Tetris', clickCount: 950 },
+    { gameId: 'mathquiz', gameName: 'Quantum Guess', clickCount: 840 },
+    { gameId: 'capitalcities', gameName: 'Geo Quest', clickCount: 720 }
 ];
 
 const TrendingGames: React.FC = () => {
     const [trendingGames, setTrendingGames] = useState<TrendingGame[]>(INITIAL_TRENDING_GAMES);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {

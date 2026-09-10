@@ -19,6 +19,13 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
     const [winner, setWinner] = useState<string | null>(null);
     const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
 
+    const resetGame = () => {
+        setBoard(Array.from({ length: rows }, () => Array(columns).fill(" ")));
+        setCurrentPlayer("R");
+        setGameOver(false);
+        setWinner(null);
+    };
+
     const generateCellId = (row: number, col: number): string => {
         return `cell-${row}-${col}`;
     };
@@ -150,7 +157,7 @@ const Connect4: React.FC<Connect4Props> = ({ userId }) => {
                     {gameOver && (
                         <button
                             className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-                            onClick={() => window.location.reload()}
+                            onClick={resetGame}
                         >
                             Play Again
                         </button>

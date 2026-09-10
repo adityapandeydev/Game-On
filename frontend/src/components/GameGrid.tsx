@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import GameCard from "./GameCard";
 import TrendingGames from './TrendingGames';
+import RecentlyPlayed from './RecentlyPlayed';
 import { FaArrowUp } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useSearch } from '../context/SearchContext';
@@ -13,12 +14,7 @@ interface GameGridProps {
 const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
     const navigate = useNavigate();
     const [showScrollButton, setShowScrollButton] = useState(false);
-    const [textIndex, setTextIndex] = useState(0);
     const { searchTerm } = useSearch();
-    const texts = [
-        "Welcome to Game On",
-        "Your ultimate gaming destination"
-    ];
 
     // Show button when page is scrolled up 300px
     useEffect(() => {
@@ -87,14 +83,6 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
         }
         navigateToGame(gameTitle);
     };
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setTextIndex((prev) => (prev + 1) % texts.length);
-        }, 4000); // Change text every 4 seconds
-
-        return () => clearInterval(interval);
-    }, []);
 
     const welcomeText = "Welcome to Game On".split(' ').reduce((acc: string[], word) => {
         if (word === "Game") {
@@ -217,6 +205,11 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
                         </div>
                     </section>
 
+
+                    {/* Recently Played Section */}
+                    <section id="recently-played" className="scroll-mt-16 mt-8">
+                        <RecentlyPlayed />
+                    </section>
 
                     {/* Trending Section */}
                     <section id="trending" className="scroll-mt-16 mt-8">

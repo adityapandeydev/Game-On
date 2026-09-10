@@ -34,4 +34,15 @@ export interface GlobalLeaderboardEntry {
     };
 }
 
-export type GameResult = 20 | 0; 
+export type GameResult = 'win' | 'lose' | 'draw';
+
+export type GameId = 
+    | 'tictactoe'
+    | 'connect4'
+    | 'guessmynumber'
+    | 'piggame'
+    | 'mathquiz'
+    | 'capitalcities'
+    | 'typestorm'
+    | 'slidingpuzzle'
+    | 'tetris';
