@@ -43,6 +43,8 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
     const [isGameReady, setIsGameReady] = useState<boolean>(false);
     const [typingSpeed, setTypingSpeed] = useState<number>(0);
     const [accuracy, setAccuracy] = useState<number>(100);
+    const [totalKeystrokes, setTotalKeystrokes] = useState<number>(0);
+    const [mistakeCount, setMistakeCount] = useState<number>(0);
     const [refreshLeaderboard, setRefreshLeaderboard] = useState(0);
 
     useEffect(() => {
@@ -60,26 +62,16 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
     }, [isGameActive, timeLeft]);
 
     useEffect(() => {
-        if (userInput.length > 0 && isGameActive) {
-            // Calculate WPM
-            const words = userInput.split(' ').length;
-            const minutes = (difficulty!.timeLimit - timeLeft) / 60;
-            setTypingSpeed(Math.round(words / minutes));
-
-            // Calculate accuracy
-            let correctChars = 0;
-            for (let i = 0; i < userInput.length; i++) {
-                if (userInput[i] === targetText[i]) correctChars++;
-            }
-            const newAccuracy = Math.round((correctChars / userInput.length) * 100);
-            setAccuracy(newAccuracy);
-
-            // Update score based on accuracy
-            if (newAccuracy < accuracy) {
-                setScore(prev => Math.max(0, prev - 5));
+        if (userInput.length > 0 && isGameActive && difficulty) {
+            // Standard Net WPM: (characters typed / 5) / elapsed minutes
+            const elapsedSeconds = difficulty.timeLimit - timeLeft;
+            if (elapsedSeconds > 0) {
+                const words = userInput.length / 5;
+                const minutes = elapsedSeconds / 60;
+                setTypingSpeed(Math.max(1, Math.round(words / minutes)));
             }
         }
-    }, [userInput, timeLeft, difficulty, isGameActive, accuracy, targetText]);
+    }, [userInput, timeLeft, difficulty, isGameActive]);
 
     const handleDifficultySelect = useCallback((selectedDifficulty: Difficulty) => {
         setDifficulty(selectedDifficulty);
@@ -92,6 +84,8 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
         setMessage("Welcome to TypeStorm! Select difficulty to start!");
         setTypingSpeed(0);
         setAccuracy(100);
+        setTotalKeystrokes(0);
+        setMistakeCount(0);
     }, []);
 
     const handleStartGame = useCallback(() => {
@@ -105,19 +99,43 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
         if (!userId) return;
         
         try {
-            if (result === 'win' && score > highScore) {
-                setHighScore(score);
+            const finalScore = result === 'win' ? Math.max(20, Math.round(score * (accuracy / 100))) : 0;
+            if (result === 'win' && finalScore > highScore) {
+                setHighScore(finalScore);
             }
-            await ScoreService.saveScore('typestorm', userId, result, 'TypeStorm');
+            await ScoreService.saveScore('typestorm', userId, finalScore, 'TypeStorm');
             setRefreshLeaderboard(prev => prev + 1);
             setMessage(result === 'win' ? "🎉 Well done! Try another difficulty?" : "⏰ Time's up!");
         } catch (error) {
             console.error('Failed to save score:', error);
         }
-    }, [userId, score, highScore]);
+    }, [userId, score, accuracy, highScore]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const input = e.target.value;
+        const prevInput = userInput;
+
+        // If characters were added
+        if (input.length > prevInput.length) {
+            const addedCharsCount = input.length - prevInput.length;
+            const newTotal = totalKeystrokes + addedCharsCount;
+            let newMistakes = mistakeCount;
+
+            // Inspect each newly added character against target text
+            for (let i = prevInput.length; i < input.length; i++) {
+                if (i >= targetText.length || input[i] !== targetText[i]) {
+                    newMistakes++;
+                    setScore(prev => Math.max(10, prev - 5));
+                }
+            }
+
+            setTotalKeystrokes(newTotal);
+            setMistakeCount(newMistakes);
+
+            const computedAcc = Math.max(0, Math.min(100, Math.round(((newTotal - newMistakes) / newTotal) * 100)));
+            setAccuracy(computedAcc);
+        }
+
         setUserInput(input);
         
         if (input === targetText) {
@@ -194,8 +212,22 @@ const TypingTestGame: React.FC<TypingTestProps> = ({ userId }) => {
                                     <span className="text-[11px] font-mono text-cyan-400 uppercase tracking-wider">Cyber Terminal Stream</span>
                                     <span className="text-[11px] font-mono text-gray-500">READY FOR INPUT</span>
                                 </div>
-                                <p className="font-mono text-base sm:text-lg text-gray-200 leading-relaxed select-none">
-                                    {targetText}
+                                <p className="font-mono text-base sm:text-lg leading-relaxed select-none tracking-wide">
+                                    {targetText.split("").map((char, index) => {
+                                        let charStyle = "text-gray-400";
+                                        if (index < userInput.length) {
+                                            charStyle = userInput[index] === char 
+                                                ? "text-emerald-400 font-bold bg-emerald-500/10 rounded-xs" 
+                                                : "text-rose-400 font-bold bg-rose-500/30 rounded-xs underline";
+                                        } else if (index === userInput.length && isGameActive) {
+                                            charStyle = "text-cyan-300 bg-cyan-400/20 underline animate-pulse";
+                                        }
+                                        return (
+                                            <span key={index} className={charStyle}>
+                                                {char}
+                                            </span>
+                                        );
+                                    })}
                                 </p>
                             </div>
 
