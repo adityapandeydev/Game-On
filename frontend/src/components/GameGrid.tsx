@@ -6,6 +6,7 @@ import RecentlyPlayed from './RecentlyPlayed';
 import { FaArrowUp } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useSearch } from '../context/SearchContext';
+import { ScoreService } from '../services/ScoreService';
 
 interface GameGridProps {
     isLoggedIn: boolean;
@@ -81,6 +82,19 @@ const GameGrid: React.FC<GameGridProps> = ({ isLoggedIn }) => {
             navigate("/login");
             return;
         }
+        const gameIdMap: Record<string, string> = {
+            "Tic-Tac-Toe": "tictactoe",
+            "Connect 4": "connect4",
+            "Guess My Number": "guessmynumber",
+            "Pig Game": "piggame",
+            "Quantum Guess": "mathquiz",
+            "Geo Quest": "capitalcities",
+            "TypeStorm": "typestorm",
+            "Sliding Puzzle": "slidingpuzzle",
+            "Tetris": "tetris"
+        };
+        const id = gameIdMap[gameTitle] || gameTitle.toLowerCase().replace(/\s+/g, '');
+        ScoreService.trackGamePlay(id, gameTitle);
         navigateToGame(gameTitle);
     };
 

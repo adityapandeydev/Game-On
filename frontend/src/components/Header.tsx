@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ onSidebarToggle, isLoggedIn, onLogout }
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onSidebarToggle}
-                        className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-gray-900/80 border border-transparent hover:border-purple-500/30 transition-all focus:outline-none"
+                        className="lg:hidden p-2 rounded-xl text-gray-400 hover:text-white hover:bg-gray-900/80 border border-transparent hover:border-purple-500/30 transition-all focus:outline-none"
                         aria-label="Toggle Navigation Sidebar"
                     >
                         <FaBars size={18} />

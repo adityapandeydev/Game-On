@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaFire, FaGamepad } from 'react-icons/fa';
+import { ScoreService } from '../services/ScoreService';
 
 interface TrendingGame {
     gameId: string;
@@ -83,7 +84,10 @@ const TrendingGames: React.FC = () => {
                     'x-auth-token': localStorage.getItem('token') || ''
                 },
                 body: JSON.stringify({ gameName })
-            });
+            }).catch(() => {});
+
+            // Track recently played
+            ScoreService.trackGamePlay(gameId, gameName);
 
             // Navigate to the game
             navigate(route);

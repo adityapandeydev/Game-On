@@ -6,7 +6,7 @@ const { query } = require('../db/postgres');
 // Get recently played games for the logged-in user
 router.get('/', auth, async (req, res) => {
     try {
-        const userId = parseInt(req.user.id, 10);
+        const userId = parseInt(req.user.id || req.user.userId, 10);
         const result = await query('SELECT recently_played FROM users WHERE id = $1', [userId]);
 
         if (result.rows.length === 0) {
@@ -22,9 +22,9 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Add a game to recently played
-router.post('/track', auth, async (req, res) => {
+const handleTrack = async (req, res) => {
     try {
-        const userId = parseInt(req.user.id, 10);
+        const userId = parseInt(req.user.id || req.user.userId, 10);
         const { gameId, gameName } = req.body;
 
         if (!gameId || !gameName) {
@@ -55,6 +55,9 @@ router.post('/track', auth, async (req, res) => {
         console.error('Error tracking recently played game:', error);
         res.status(500).json({ message: 'Server error saving recently played' });
     }
-});
+};
+
+router.post('/', auth, handleTrack);
+router.post('/track', auth, handleTrack);
 
 module.exports = router;

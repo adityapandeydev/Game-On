@@ -73,7 +73,7 @@ export class ScoreService {
                 numericScore = this.calculateScore(gameId, scoreOrResult);
             }
 
-            const response = await fetch('/api/leaderboard/submit', {
+            await fetch('/api/leaderboard/submit', {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify({
@@ -84,15 +84,39 @@ export class ScoreService {
                 })
             });
 
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                if (data.msg?.includes('not higher')) {
-                    return;
-                }
-                console.warn('Score submission warning:', data);
-            }
+            // Automatically record in recently played
+            await this.trackGamePlay(gameId, gameName || gameId);
         } catch (error) {
             console.error('Error saving score:', error);
+        }
+    }
+
+    static async trackGamePlay(gameId: string, gameName: string): Promise<void> {
+        try {
+            // Update localStorage immediately
+            const raw = localStorage.getItem('recentlyPlayed');
+            let list = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(list)) list = [];
+            list = list.filter((g: { id?: string; title?: string }) => g.id !== gameId && g.title !== gameName);
+            list.unshift({
+                id: gameId,
+                title: gameName,
+                lastPlayed: new Date().toISOString()
+            });
+            localStorage.setItem('recentlyPlayed', JSON.stringify(list.slice(0, 6)));
+            window.dispatchEvent(new Event('recentlyPlayedUpdated'));
+
+            // Sync with backend if logged in
+            const token = localStorage.getItem('token');
+            if (token) {
+                await fetch('/api/recently-played/track', {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify({ gameId, gameName })
+                });
+            }
+        } catch (e) {
+            console.warn('Could not track game play:', e);
         }
     }
 
