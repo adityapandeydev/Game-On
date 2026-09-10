@@ -1,6 +1,7 @@
 # Stage 1: Build static binary
-FROM golang:1.24-alpine AS builder
+FROM golang:alpine AS builder
 
+ENV GOTOOLCHAIN=auto
 WORKDIR /app
 
 # Install git and ca-certificates
@@ -13,8 +14,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build stripped static binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+# Ensure dependencies are tidy and build stripped static binary
+RUN go mod tidy && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-s -w" \
     -o /app/server \
     ./cmd/server

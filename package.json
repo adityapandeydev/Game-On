@@ -6,9 +6,14 @@
   "scripts": {
     "dev": "bun --cwd frontend dev",
     "dev:frontend": "bun --cwd frontend dev",
-    "dev:backend": "go run ./backend/cmd/server/main.go",
+    "dev:backend": "docker compose up -d",
+    "dev:backend:local": "go run ./backend/cmd/server/main.go",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose up --build -d",
     "build": "bun --cwd frontend build",
     "build:frontend": "bun --cwd frontend build",
-    "build:backend": "go build -o ./backend/server.exe ./backend/cmd/server/main.go"
+    "build:backend": "docker compose build"
   }
 }

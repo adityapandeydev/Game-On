@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-6243}
       POSTGRES_DB: game_on
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       # Named volume guarantees data persists across restarts & laptop shutdowns
       - postgres_data:/var/lib/postgresql/data
