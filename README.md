@@ -1,197 +1,112 @@
 # Game-On
 
-A high-performance retro-futuristic arcade platform featuring a React and TypeScript frontend, a Go and Chi backend service, and a normalized PostgreSQL 16 database orchestrated via Docker Compose.
+Nine quick browser games with server-verified scores and live leaderboards.
 
----
+Every game runs on the server. The browser sends moves and renders what comes back. A score is recorded only when the server itself ran the session to the end, so it can't be faked by editing requests.
 
-## Architecture Overview
+| Game | Type | How the server keeps it honest |
+| :--- | :--- | :--- |
+| Stackfall | Falling blocks | Replays the browser's input log through the same deterministic simulation |
+| Drop Four | Four-in-a-row vs bot | Negamax bot with alpha-beta pruning, plays its moves on the server |
+| Tic-Tac-Toe | Ten-round runs vs bot | Minimax bot, server-held board |
+| Slide | 3x3 to 5x5 sliding puzzle | Solvable shuffles, every move validated |
+| TypeStorm | Typing race | Server clock, per-word timing and plausibility checks |
+| Geo Quest | Capitals quiz | Answers revealed only after you commit |
+| Quantum Guess | 60-second maths sprint | Questions and clock on the server |
+| Guess the Number | Higher or lower | The secret never leaves the server |
+| Pig | Dice vs bot | Dice rolled on the server |
 
-Game-On is structured as a decoupled client-server architecture:
-
-- Frontend: Single-page application built with React 19, TypeScript, and Vite. Styled with modern arcade glassmorphism and Tailwind CSS.
-- Backend: Micro-latency REST service implemented in Go using the Chi router adhering to standard net/http contracts.
-- Persistence: PostgreSQL 16 relational database with connection pooling via pgxpool, atomic score upserts, and host-managed persistent volumes.
-- Runtime Environment: Dockerized backend and database services with local development options powered by Bun.
+## Architecture
 
 ```
-Game-On/
-├── backend/
-│   ├── cmd/server/main.go       # Go application entrypoint and lifecycle
-│   ├── internal/
-│   │   ├── config/              # Environment variable configuration
-│   │   ├── database/            # pgxpool connection management and schema sync
-│   │   ├── handlers/            # REST controllers (auth, leaderboards, reviews, stats)
-│   │   ├── middleware/          # JWT authentication and request context
-│   │   ├── models/              # Relational models and DTO structures
-│   │   └── router/              # Chi router mounting and middleware pipeline
-│   ├── Dockerfile               # Multi-stage Alpine container builder
-│   ├── go.mod                   # Go module definitions
-│   └── go.sum                   # Dependency checksums
-├── frontend/
-│   ├── src/
-│   │   ├── components/          # Arcade game interfaces, navbar, and leaderboards
-│   │   ├── context/             # AuthContext and session state
-│   │   ├── services/            # API abstraction layer (ScoreService)
-│   │   └── types/               # TypeScript domain interfaces
-│   ├── package.json             # Frontend package definitions
-│   └── vite.config.ts           # Vite bundler and API reverse-proxy configuration
-├── docker-compose.yml           # Multi-container orchestration (Go backend + PostgreSQL 16)
-├── go.work                      # Go workspace configuration
-└── package.json                 # Unified workspace scripts
+backend/                Go 1.27, standard library net/http (no router or framework)
+  cmd/server            entry point: config, migrations, HTTP server, graceful shutdown
+  internal/api          route handlers
+  internal/auth         HS256 session tokens (HttpOnly cookie), bcrypt
+  internal/catalog      game metadata served at GET /api/games
+  internal/db           pgx pool and embedded, versioned SQL migrations
+  internal/game         engine: Session interface, in-memory session manager
+  internal/games/*      one package per game, each with tests
+  internal/httpx        JSON helpers, typed errors, middleware, rate limiter
+  internal/store        queries, read cache, batched play counters
+  internal/web          serves the built frontend (precompressed, immutable caching)
+frontend/               React 19, Vite, Tailwind 4, Motion, TanStack Query
+  src/games/*           one stage component per game, each lazy-loaded
+  src/components/ui     design-system primitives (Button, Segmented, Field, ...)
+Dockerfile              multi-stage build: one ~26 MB distroless image serves API and app
+docker-compose.yml      Postgres 16 (and the app under the "app" profile)
 ```
 
----
+**Request flow:** the browser talks only to the Go server. In production that one server serves both `/api/*` and the built app; in development, Vite proxies `/api` to it.
 
-## Technology Stack
+**Game sessions** live in memory, which makes every move a map lookup. Idle sessions expire after 30 minutes. A signed-in player has at most one live run per game. This means one process owns its sessions: to run several instances, use sticky routing or move the session store to a shared backend such as Redis. The engine's `Manager` is the only code that would change.
 
-### Frontend
-- Runtime and Package Manager: Bun
-- Framework: React 19 with TypeScript
-- Build Tool: Vite
-- Styling: Tailwind CSS, Vanilla CSS custom glassmorphism design tokens
-- Animation: Framer Motion, Canvas Confetti
-- Icons: Lucide React
+**Stackfall** is the one real-time game. The browser runs the simulation at 60 Hz for smooth play and streams its inputs every second. The server replays them through `backend/internal/games/stackfall/sim.go` and refuses logs that run ahead of real time. `frontend/src/games/stackfall/sim.ts` is a line-for-line twin: `bun test` replays fixtures generated by the Go tests and requires identical results. If you change the rules, change both files and run `bun run fixtures`.
 
-### Backend
-- Language: Go 1.27
-- Router: go-chi/chi/v5
-- Database Driver: jackc/pgx/v5 with pgxpool connection pooling
-- Cryptography: golang.org/x/crypto/bcrypt (work factor 10)
-- Tokens: golang-jwt/jwt/v5 (HMAC-SHA256)
-- Container: Docker (Alpine 3.20 base, non-root user execution, sub-15MB image footprint)
+## Running locally
 
-### Database
-- Engine: PostgreSQL 16 Alpine
-- Storage: Named persistent Docker volume (`postgres_data`)
-
----
-
-## Database Architecture
-
-The PostgreSQL schema initializes automatically on backend startup with strict constraints and indexes:
-
-| Table | Primary Key | Foreign Keys / Constraints | Indexes | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| users | id SERIAL | UNIQUE(email) | Primary Key, UNIQUE(email) | User credentials and profile data |
-| scores | id SERIAL | user_id REFERENCES users(id) ON DELETE CASCADE, UNIQUE(user_id, game_id) | (game_id, score DESC), (user_id) | High scores per game per user |
-| recently_played | id SERIAL | user_id REFERENCES users(id) ON DELETE CASCADE, UNIQUE(user_id, game_id) | (user_id, last_played DESC) | Player game launch history |
-| game_stats | game_id VARCHAR(50) | PRIMARY KEY (game_id) | (click_count DESC) | Platform-wide game popularity metrics |
-| reviews | id SERIAL | user_id REFERENCES users(id) ON DELETE CASCADE, CHECK(rating >= 1 AND rating <= 5) | (game_id, created_at DESC) | User feedback and game ratings |
-
-### Atomic Score Upserts
-Score persistence utilizes atomic PostgreSQL upserts to eliminate race conditions under concurrent submissions:
-
-```sql
-INSERT INTO scores (user_id, game_id, game_name, score, streak, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-ON CONFLICT (user_id, game_id)
-DO UPDATE SET
-    score = GREATEST(scores.score, EXCLUDED.score),
-    streak = EXCLUDED.streak,
-    game_name = EXCLUDED.game_name,
-    updated_at = NOW();
-```
-
----
-
-## Getting Started
-
-### Prerequisites
-- Docker Desktop with Docker Compose
-- Bun (or Node.js 20+)
-- Git
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/adityapandeydev/Game-On.git
-cd Game-On
-```
-
-### 2. Environment Configuration
-Create a `.env` file in the root or `backend/` directory if custom credentials are required. By default, `docker-compose.yml` provides sensible defaults:
-
-```env
-PORT=5000
-DATABASE_URL=postgres://postgres:6243@db:5432/game_on?sslmode=disable
-JWT_SECRET=game_on_super_secret_jwt_key_2026
-```
-
-### 3. Start Backend and Database via Docker
-Run the following command to start both the PostgreSQL 16 database and the Go backend service in the background:
+You need Docker, Go 1.27 and Bun.
 
 ```bash
-bun run docker:up
+cp .env.example .env    # optional; the defaults work for local development
+bun run db              # Postgres on localhost:5433
+bun run dev:api         # API on :8080; migrations run automatically
+bun run dev:web         # app on http://localhost:5173
 ```
 
-Alternatively:
-```bash
-docker compose up -d
-```
-
-To view live backend logs:
-```bash
-bun run docker:logs
-```
-
-To stop all containers:
-```bash
-bun run docker:down
-```
-
-### 4. Start Frontend
-In a separate terminal, launch the React development server:
+Other scripts:
 
 ```bash
-bun run dev:frontend
+bun run test            # go vet + go test + bun test
+bun run lint            # eslint, gofmt, go vet
+bun run build           # build the frontend, then a static server binary at bin/server
+bun run docker:up       # run the full production image with Postgres
 ```
 
-The frontend will run at `http://localhost:5173` and automatically proxy API requests to `http://localhost:5000`.
+## Configuration
 
----
+All configuration comes from environment variables. See `.env.example`.
 
-## API Reference
+| Variable | Default | Notes |
+| :--- | :--- | :--- |
+| `APP_ENV` | `development` | `production` makes `JWT_SECRET` required, sets Secure cookies and HSTS, and switches to JSON logs |
+| `PORT` | `8080` | |
+| `DATABASE_URL` | local compose database | Postgres connection string |
+| `JWT_SECRET` | dev-only value | **Required in production**, at least 32 bytes (`openssl rand -base64 48`) |
+| `TOKEN_TTL` | `720h` | Session length |
+| `STATIC_DIR` | empty | Directory of the built frontend to serve; the Docker image sets it |
+| `TRUST_PROXY` | `false` | Set `true` only behind a reverse proxy that sets `X-Forwarded-For` (rate limits use the client IP) |
+| `CORS_ORIGINS` | empty | Only needed if the frontend is served from a different origin |
+| `DB_MAX_CONNS` | `20` | |
 
-### Authentication
-- `POST /api/auth/register` - Register a new user account with hashed password
-- `POST /api/auth/login` - Authenticate user and issue JWT
-- `GET /api/auth/me` - Retrieve authenticated user profile
-- `GET /api/auth/verify` - Validate token integrity
+## Deploying
 
-### Leaderboards
-- `GET /api/leaderboard/global` - Global player ranking aggregated across all games
-- `GET /api/leaderboard/:gameId` - Top scores for a specific game
-- `GET /api/leaderboard/user/:userId` - Historical best scores for a user
-- `POST /api/leaderboard/submit` - Submit or update best score (requires JWT)
+The image is production-ready. What's left depends on your host:
 
-### Recently Played
-- `GET /api/recently-played` - Retrieve the current user's recently launched games
-- `POST /api/recently-played/track` - Record game activity (requires JWT)
+1. Provide Postgres 16+ and set `DATABASE_URL`. Migrations apply on startup, guarded by an advisory lock.
+2. Set `APP_ENV=production` and a strong `JWT_SECRET`.
+3. Put TLS in front (load balancer or reverse proxy) and set `TRUST_PROXY=true` if it forwards client IPs.
+4. Run a single instance, or several with sticky sessions (see Architecture).
+5. Point your platform's health probe at `/api/health` and its readiness probe at `/api/ready`, which checks the database.
 
-### Trending Games
-- `GET /api/trending` - List games sorted by engagement and click count
-- `POST /api/trending/track/:gameId` - Atomically increment click count for a game
+The server drains in-flight requests on SIGTERM and flushes buffered play counters before exiting.
 
-### Reviews
-- `GET /api/reviews` - Retrieve recent platform reviews
-- `GET /api/reviews/:gameId` - Retrieve reviews for a specific title
-- `POST /api/reviews` - Submit a review and star rating (requires JWT)
-- `DELETE /api/reviews/:reviewId` - Remove user-owned review (requires JWT)
+## API
 
-### Game Statistics
-- `GET /api/gamestats/:gameId` - Retrieve telemetry and aggregate stats for a game
+All endpoints are under `/api`. Errors share one shape: `{"error": {"code", "message", "fields?"}}`.
 
----
-
-## Security Specifications
-
-1. Password Storage: Passwords are encrypted using bcrypt with salt rounds set to cost 10 before storage. Plaintext passwords are never persisted or logged.
-2. Token Authentication: Authorization utilizes HMAC-SHA256 JWT tokens with a 7-day expiration lifecycle. Tokens can be provided via `Authorization: Bearer <token>` or `x-auth-token` headers.
-3. Container Hardening: The backend Docker container runs under an unprivileged `appuser` account inside Alpine Linux with stripped debugging symbols (`-ldflags="-s -w"`).
-4. SQL Injection Protection: All database interactions utilize parameterized prepared statements via the `pgx` driver.
-5. Persistent Data Guarantee: Database files reside in the named volume `postgres_data`, surviving system reboots and container upgrades.
-
----
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| GET | `/health`, `/ready` | Liveness, and readiness including a database check |
+| GET | `/games`, `/games/{id}` | Catalog, with weekly plays and average rating |
+| POST | `/auth/register`, `/auth/login`, `/auth/logout` | Sets or clears the session cookie |
+| GET | `/me` | Current user and per-game stats (`{"user": null}` for guests) |
+| GET | `/leaderboards/global`, `/leaderboards/{gameId}` | Top 50 |
+| GET / POST | `/reviews?game=&before=` | List (keyset pagination), or create or edit your review |
+| DELETE | `/reviews/{id}` | Delete your own review |
+| POST | `/games/{id}/sessions` | Start a session (`{"difficulty"}`); works for guests |
+| GET / POST / DELETE | `/sessions/{sid}`, `/sessions/{sid}/actions` | Read, act on, or abandon a session |
 
 ## License
 
-This project is licensed under the MIT License.
+MIT

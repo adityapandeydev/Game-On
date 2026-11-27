@@ -1,19 +1,17 @@
 {
-  "name": "game-on-root",
-  "version": "1.0.0",
+  "name": "game-on",
   "private": true,
-  "description": "Game-On Arcade Platform",
+  "description": "Game-On: quick browser games with server-verified scores",
   "scripts": {
-    "dev": "bun --cwd frontend dev",
-    "dev:frontend": "bun --cwd frontend dev",
-    "dev:backend": "docker compose up -d",
-    "dev:backend:local": "go run ./backend/cmd/server/main.go",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f",
-    "docker:build": "docker compose up --build -d",
-    "build": "bun --cwd frontend build",
-    "build:frontend": "bun --cwd frontend build",
-    "build:backend": "docker compose build"
+    "db": "docker compose up -d db",
+    "dev:api": "cd backend && go run ./cmd/server",
+    "dev:web": "bun --cwd frontend dev",
+    "test": "cd backend && go vet ./... && go test ./... && cd ../frontend && bun test",
+    "lint": "bun --cwd frontend lint && cd backend && gofmt -l . && go vet ./...",
+    "build": "bun --cwd frontend run build && cd backend && go build -trimpath -ldflags=\"-s -w\" -o ../bin/server ./cmd/server",
+    "start": "STATIC_DIR=frontend/dist ./bin/server",
+    "fixtures": "cd backend && UPDATE_FIXTURES=1 go test -count=1 ./internal/games/stackfall/",
+    "docker:up": "docker compose --profile app up -d --build",
+    "docker:down": "docker compose --profile app down"
   }
 }

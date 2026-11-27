@@ -111,12 +111,12 @@ func (s *statusRecorder) Write(b []byte) (int, error) {
 
 func (s *statusRecorder) Unwrap() http.ResponseWriter { return s.ResponseWriter }
 
-// Logger emits one structured line per API request. Static asset hits are
-// skipped to keep logs useful.
+// Logger emits one structured line per API request. Static asset hits and
+// health probes are skipped to keep logs useful.
 func Logger(log *slog.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !strings.HasPrefix(r.URL.Path, "/api/") {
+			if !strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api/health" {
 				next.ServeHTTP(w, r)
 				return
 			}
