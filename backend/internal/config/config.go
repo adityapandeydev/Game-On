@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -34,9 +35,11 @@ type Config struct {
 func (c *Config) IsProduction() bool { return c.Env == EnvProduction }
 
 // Load reads configuration from the process environment. A local ".env" file is
-// read first when present (development convenience); real environment variables win.
+// read first when present (development convenience), in the working directory
+// and then the repo root; real environment variables and earlier files win.
 func Load() (*Config, error) {
 	loadDotEnv(".env")
+	loadDotEnv(filepath.Join("..", ".env"))
 
 	cfg := &Config{
 		Env:             Env(get("APP_ENV", string(EnvDevelopment))),
