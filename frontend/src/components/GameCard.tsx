@@ -1,87 +1,60 @@
-import React from "react";
+import { Link } from "react-router-dom";
+import { Bot, Clock3, Play, UserRound } from "lucide-react";
+import { GameArt } from "./art/GameArt";
+import { StarRow } from "./ui/Stars";
+import { cx, fmtCompact } from "../lib/format";
+import type { Game } from "../lib/types";
 
-export interface GameCardProps {
-    title: string;
-    badge?: string;
-    subtitle?: string;
-}
+const genreLabel = { strategy: "Strategy", puzzle: "Puzzle", arcade: "Arcade", brain: "Brain" } as const;
 
-interface MediaItem {
-    type: "gif" | "video";
-    src: string;
-}
-
-const mediaMap: Record<string, MediaItem> = {
-    "Tic-Tac-Toe": { type: "gif", src: "/Tic Tac Toe.gif" },
-    "Guess My Number": { type: "video", src: "/GuessMyNumber1.mp4" },
-    "Connect 4": { type: "video", src: "/connect.mp4" },
-    "Pig Game": { type: "video", src: "/piggame.mp4" },
-    "Quantum Guess": { type: "video", src: "/Math Quiz.mp4" },
-    "Geo Quest": { type: "video", src: "/CapitalCities.mp4" },
-    "TypeStorm": { type: "gif", src: "/typing2.gif" },
-    "Tetris": { type: "gif", src: "/tetris1.gif" },
-    "Sliding Puzzle": { type: "gif", src: "/sliding puzzle.gif" },
-};
-
-const GameCard: React.FC<GameCardProps> = ({ title, badge, subtitle }) => {
-    const media = mediaMap[title];
-
-    const renderMedia = () => {
-        if (!media) {
-            return (
-                <div className="flex items-center justify-center w-full h-full text-5xl bg-gradient-to-br from-purple-900/40 to-cyan-900/30">
-                    🎮
-                </div>
-            );
-        }
-
-        return media.type === "gif" ? (
-            <img
-                src={media.src}
-                alt={title}
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-        ) : (
-            <video
-                src={media.src}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-        );
-    };
-
-    return (
-        <div className="group relative w-full h-80 rounded-2xl overflow-hidden bg-gray-900/80 border border-purple-500/20 shadow-xl hover:shadow-2xl hover:shadow-purple-500/30 hover:border-purple-400/60 transition-all duration-300">
-            {renderMedia()}
-            
-            {/* Ambient vignette gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-
-            {/* Badge if present */}
-            {badge && (
-                <div className="absolute top-3 right-3 z-10">
-                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600/90 text-white backdrop-blur-md border border-purple-400/40 shadow-lg">
-                        {badge}
-                    </span>
-                </div>
-            )}
-
-            {/* Bottom Card Title Info */}
-            <div className="absolute bottom-0 inset-x-0 p-4 z-10 flex flex-col items-center justify-end text-center bg-gradient-to-t from-gray-950 via-gray-950/80 to-transparent">
-                <h2 className="text-xl font-bold font-gaming tracking-wide text-white drop-shadow group-hover:text-purple-300 transition-colors">
-                    {title}
-                </h2>
-                {subtitle && (
-                    <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
-                )}
-                <div className="w-12 h-1 bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-x-0 group-hover:scale-x-100" />
-            </div>
+/**
+ * A game "cartridge". All hover and press motion is CSS transforms on the
+ * compositor; nothing here runs JavaScript per frame.
+ */
+export function GameCard({ game, best, className }: { game: Game; best?: number; className?: string }) {
+  return (
+    <Link
+      to={`/play/${game.id}`}
+      data-accent={game.accent}
+      className={cx(
+        "group chunk flex h-full flex-col overflow-hidden",
+        "transition-[transform,box-shadow] duration-200 ease-[var(--ease-snap)]",
+        "hover:-translate-x-0.5 hover:-translate-y-1 hover:shadow-[6px_7px_0_var(--shadow)]",
+        "active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_var(--shadow)] active:duration-75",
+        className,
+      )}
+    >
+      <div className="relative aspect-[16/10] overflow-hidden border-b-2 border-line">
+        <GameArt id={game.id} className="size-full transition-transform duration-500 ease-[var(--ease-snap)] group-hover:scale-[1.06]" />
+        <span className="label-caps absolute top-3 left-3 rounded-lg border-2 border-line bg-surface px-2 py-1 text-ink">{genreLabel[game.genre]}</span>
+        <span className="absolute right-3 bottom-3 grid size-11 translate-y-2 scale-90 place-items-center rounded-full border-2 border-[#17151c] bg-[#17151c] text-[var(--accent)] opacity-0 transition-[transform,opacity] duration-200 ease-[var(--ease-out-back)] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:opacity-100">
+          <Play size={18} fill="currentColor" className="translate-x-px" />
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-1.5 p-4">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="display-tight text-xl">{game.title}</h3>
+          {best ? <span className="num shrink-0 text-xs font-bold text-ink-2">Best {fmtCompact(best)}</span> : null}
         </div>
-    );
-};
-
-export default GameCard;
+        <p className="text-sm leading-snug text-ink-2">{game.tagline}</p>
+        <div className="mt-auto flex items-center gap-3 pt-3 text-xs font-semibold text-ink-3">
+          <span className="inline-flex items-center gap-1">
+            {game.mode === "vs-bot" ? <Bot size={14} /> : <UserRound size={14} />}
+            {game.mode === "vs-bot" ? "vs bot" : "solo"}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Clock3 size={14} />~{game.minutes} min
+          </span>
+          {game.reviews > 0 ? (
+            <span className="ml-auto inline-flex items-center gap-1.5">
+              <StarRow value={game.rating} size={12} />
+              <span className="num">{game.rating.toFixed(1)}</span>
+            </span>
+          ) : (
+            <span className="ml-auto num">{fmtCompact(game.playsWeek)} plays/wk</span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}

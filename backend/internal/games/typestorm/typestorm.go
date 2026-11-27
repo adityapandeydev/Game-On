@@ -48,11 +48,13 @@ type session struct {
 	words []string
 	start time.Time
 
-	Difficulty   string   `json:"difficulty"`
-	Passage      string   `json:"passage"`
-	TimeLimitMs  int      `json:"timeLimitMs"`
-	Status       string   `json:"status"` // "ready" | "typing" | "over"
-	TimedOut     bool     `json:"timedOut"`
+	Difficulty  string `json:"difficulty"`
+	Passage     string `json:"passage"`
+	TimeLimitMs int    `json:"timeLimitMs"`
+	Status      string `json:"status"` // "ready" | "typing" | "over"
+	TimedOut    bool   `json:"timedOut"`
+	// Rejected explains why a finished race was not counted (implausible timing).
+	Rejected     string   `json:"rejected,omitempty"`
 	WPM          float64  `json:"wpm"`
 	Accuracy     float64  `json:"accuracy"` // 0-100
 	ElapsedMs    int      `json:"elapsedMs"`
@@ -125,8 +127,12 @@ func (s *session) Act(now time.Time, raw json.RawMessage) error {
 		if i < len(s.words)-1 {
 			chars++ // the trailing space
 		}
-		if w.Ms < minCharMs*chars || w.Mistakes < 0 || w.Mistakes > 100 {
-			return game.Reject("That was faster than humanly plausible")
+		if w.Mistakes < 0 || w.Mistakes > 100 {
+			return game.Reject("Malformed word stats")
+		}
+		if w.Ms < minCharMs*chars {
+			s.reject("Some words were typed faster than humanly possible", elapsed)
+			return nil
 		}
 		totalMs += w.Ms
 		mistakes += w.Mistakes
@@ -136,7 +142,8 @@ func (s *session) Act(now time.Time, raw json.RawMessage) error {
 		}
 	}
 	if time.Duration(totalMs)*time.Millisecond > elapsed+latencySlack {
-		return game.Reject("Timings don't match the race clock")
+		s.reject("Your timings didn't match the race clock", elapsed)
+		return nil
 	}
 
 	// Speed comes from the server clock, never from the client's timings.
@@ -144,7 +151,8 @@ func (s *session) Act(now time.Time, raw json.RawMessage) error {
 	minutes := elapsed.Minutes()
 	wpm := float64(chars) / 5 / minutes
 	if wpm > maxWPM {
-		return game.Reject("That was faster than humanly plausible")
+		s.reject("That was faster than humanly plausible", elapsed)
+		return nil
 	}
 	acc := float64(chars) / float64(chars+mistakes)
 
@@ -155,6 +163,14 @@ func (s *session) Act(now time.Time, raw json.RawMessage) error {
 	s.Score = int(math.Round(wpm * acc * acc * s.bonus * 10))
 	s.result = &game.Result{Outcome: game.Done, Score: s.Score}
 	return nil
+}
+
+// reject ends the race uncounted. The session is over either way, so the
+// player sees why instead of being stuck.
+func (s *session) reject(why string, elapsed time.Duration) {
+	s.Status, s.Rejected = "over", why
+	s.ElapsedMs = int(elapsed.Milliseconds())
+	s.result = &game.Result{Outcome: game.Loss, Score: 0}
 }
 
 func (s *session) timeout(elapsed time.Duration) {

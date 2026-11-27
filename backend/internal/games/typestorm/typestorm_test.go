@@ -50,7 +50,7 @@ func TestRejectsImpossibleSpeed(t *testing.T) {
 	s := newSession(t)
 	t0 := time.Unix(0, 0)
 	start(s, t0)
-	if err := finish(s, t0.Add(2*time.Second), 10, 0); !game.IsActionError(err) {
+	if err := finish(s, t0.Add(2*time.Second), 10, 0); err != nil || s.Rejected == "" || s.Result().Score != 0 {
 		t.Fatal("bot-speed race accepted")
 	}
 }
@@ -59,7 +59,7 @@ func TestRejectsTimingsLongerThanRace(t *testing.T) {
 	s := newSession(t)
 	t0 := time.Unix(0, 0)
 	start(s, t0)
-	if err := finish(s, t0.Add(5*time.Second), 200, 0); !game.IsActionError(err) {
+	if err := finish(s, t0.Add(5*time.Second), 200, 0); err != nil || s.Rejected == "" {
 		t.Fatal("inflated timings accepted")
 	}
 }

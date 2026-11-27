@@ -240,7 +240,7 @@ func TestFixtures(t *testing.T) {
 	}
 	b, err := os.ReadFile(path)
 	if err != nil {
-		t.Skipf("no fixtures yet: %v", err)
+		t.Fatalf("read fixtures (regenerate with UPDATE_FIXTURES=1): %v", err)
 	}
 	var fx []fixture
 	if err := json.Unmarshal(b, &fx); err != nil {

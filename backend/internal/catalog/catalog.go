@@ -68,7 +68,7 @@ var Games = []Game{
 			{"Block and fork", "Threaten two lines at once and the bot can only stop one."},
 		},
 		Difficulties: difficulty3,
-		Scoring:      "Wins score by difficulty and speed. Consecutive wins in a run build a streak bonus.",
+		Scoring:      "A win scores 200 / 500 / 1000 by difficulty, plus up to 50% more for winning in fewer moves. Draws score a quarter.",
 	},
 	{
 		ID: "tic-tac-toe", Title: "Tic-Tac-Toe", Genre: GenreStrategy, Mode: "vs-bot", Minutes: 2, Accent: "sky",

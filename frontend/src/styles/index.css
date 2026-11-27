@@ -1,0 +1,210 @@
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/martian-mono/wdth.css";
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Design tokens ---------- */
+:root {
+  --bg: #f3efe6;
+  --bg-dot: #d9d2c3;
+  --surface: #fffcf5;
+  --surface-2: #ebe6da;
+  --surface-3: #e0d9ca;
+  --ink: #17151c;
+  --ink-2: #5d5866;
+  --ink-3: #8a8493;
+  --line: #17151c;
+  --line-soft: #d6cfbf;
+  --shadow: #17151c;
+  --brand: #d4ff3a;
+  --on-accent: #17151c;
+  --danger: #e5484d;
+  --success: #2fa36b;
+  --focus: #3a6bff;
+
+  --a-lime: #a6e34b;
+  --a-coral: #ff7a59;
+  --a-sky: #5cc8ff;
+  --a-violet: #a88bff;
+  --a-amber: #ffc23d;
+  --a-teal: #3ddbc1;
+  --a-pink: #ff7eb6;
+  --a-indigo: #8c96ff;
+  --a-rose: #ff5c7a;
+}
+
+.dark {
+  --bg: #111015;
+  --bg-dot: #22202a;
+  --surface: #1b1a21;
+  --surface-2: #24222c;
+  --surface-3: #2e2b37;
+  --ink: #f3efe6;
+  --ink-2: #aaa4b4;
+  --ink-3: #7a7484;
+  --line: #3b3746;
+  --line-soft: #2b2833;
+  --shadow: #000000;
+  --danger: #ff6369;
+  --success: #3dd68c;
+  --focus: #7c9cff;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-brand: var(--brand);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-focus: var(--focus);
+
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Martian Mono Variable", ui-monospace, monospace;
+
+  --radius-card: 18px;
+  --radius-btn: 12px;
+
+  --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+
+/* ---------- Base ---------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    min-height: 100dvh;
+    background-color: var(--bg);
+    /* A faint dot grid: the "arcade mat". Static, so it costs nothing per frame. */
+    background-image: radial-gradient(var(--bg-dot) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-stretch: 100%;
+    font-weight: 450;
+    font-feature-settings: "ss01";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--brand);
+    color: #17151c;
+  }
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  input,
+  textarea {
+    font: inherit;
+  }
+}
+
+/* ---------- Utilities ---------- */
+@utility display {
+  font-stretch: 125%;
+  font-weight: 860;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+@utility display-tight {
+  font-stretch: 112%;
+  font-weight: 780;
+  letter-spacing: -0.015em;
+}
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-stretch: 85%;
+}
+@utility label-caps {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-stretch: 112%;
+}
+/* The signature "chunky" surface: solid border plus a hard offset shadow. */
+@utility chunk {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+@utility chunk-flat {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-card);
+}
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Accent palette per game, selected with data-accent. */
+[data-accent="lime"] { --accent: var(--a-lime); }
+[data-accent="coral"] { --accent: var(--a-coral); }
+[data-accent="sky"] { --accent: var(--a-sky); }
+[data-accent="violet"] { --accent: var(--a-violet); }
+[data-accent="amber"] { --accent: var(--a-amber); }
+[data-accent="teal"] { --accent: var(--a-teal); }
+[data-accent="pink"] { --accent: var(--a-pink); }
+[data-accent="indigo"] { --accent: var(--a-indigo); }
+[data-accent="rose"] { --accent: var(--a-rose); }
+
+/* Theme switch: a circular reveal driven by the View Transitions API (one-shot). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 0%));
+  animation: vt-reveal 520ms var(--ease-snap) forwards;
+}
+@keyframes vt-reveal {
+  to {
+    clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 50%) var(--vt-y, 0%));
+  }
+}
+
+/* Spinners only exist while something is loading, so this never idles in the background. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  ::view-transition-new(root) {
+    animation: none;
+    clip-path: none;
+  }
+}
