@@ -1,0 +1,53 @@
+package typestorm
+
+// Passages use plain ASCII so every character is typeable on any layout.
+// The normal set includes the quote passages from the TypeGauge project.
+var passages = map[string][]string{
+	"easy": {
+		"the sun came up over the hills and the town woke slowly as the first bus rolled down the main road",
+		"a good game is easy to learn and hard to master so take your time and enjoy every round you play",
+		"she packed a small bag with water and fruit and walked to the lake to watch the boats drift past",
+		"every morning the old cat sat by the window and watched the birds hop along the garden wall",
+		"the team met at noon to plan the trip and by the end of the day they had a map and a list",
+		"keep your eyes on the words and let your hands find the keys without looking down at them",
+		"the rain stopped just before dinner and the kids ran out to jump in every puddle they could find",
+		"a quiet room and a warm cup of tea can turn a long day into a calm and easy evening",
+	},
+	"normal": {
+		"The night market opened at seven, and within an hour the street was full of music, smoke and the smell of grilled corn.",
+		"Practice does not make perfect; it makes progress. Each session builds a little more speed and a little more control.",
+		"The lighthouse keeper wrote one line in the log every evening, even on the quiet nights when nothing at all happened.",
+		"When the power went out, the whole building gathered in the lobby, sharing candles, stories and a single flask of tea.",
+		"The robot paused at the door, scanned the room twice, and then politely asked whether anyone had seen its charger.",
+		"The only limit to our realization of tomorrow is our doubts of today. Tomorrow holds infinite potential, but doubt can hinder our dreams. Believe in the possibilities and take action to move forward.",
+		"Success is not final, failure is not fatal. What truly matters is the courage to keep going despite the odds. Every setback is a setup for a comeback if you persevere.",
+		"Do not dwell in the past, for it is gone, and do not dream of the future, for it is yet to come. Focus on the present, as it is where life truly happens.",
+		"The future belongs to those who believe in the beauty of their dreams. Dreams ignite the fire of ambition and passion. Hold onto them tightly, for they guide us to greatness.",
+		"In the middle of difficulty lies opportunity. Challenges may seem overwhelming, but they hold the seeds of growth. Embrace hardship as a chance to rise above and learn.",
+		"Do not go where the path may lead; go instead where there is no path and leave a trail. Blaze your own journey with courage and vision.",
+		"It does not matter how slowly you go as long as you do not stop. Progress is progress, no matter the pace. Steady determination will always outlast fleeting effort.",
+		"Our lives begin to end the day we become silent about things that matter. When we speak up for justice, kindness, and truth, we breathe life into the world.",
+		"Life is what happens when you're busy making other plans. While planning is important, remember to savor the small moments. True joy is often found in the unexpected.",
+		"To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment. Stay true to who you are.",
+		"Happiness is not something ready-made. It comes from your own actions. The choices we make every day shape our joy and fulfillment.",
+		"Do what you can with what you have, where you are. You don't need perfection or ideal circumstances to start. Use your present tools to build future success.",
+		"The way to get started is to quit talking and start doing. Action is the key to turning ideas into reality. Let your deeds echo louder than your words.",
+		"Keep your face always toward the sunshine, and shadows will fall behind you. Focus on the positive, and life's challenges become stepping stones.",
+		"What lies behind us and what lies before us are tiny matters to what lies within us. The inner strength we hold determines our journey.",
+		"The purpose of life is not to be happy but to be useful, honorable, and compassionate. By serving others and living with integrity, we find deeper meaning.",
+		"Life is really simple, but we insist on making it complicated. Strip away the unnecessary and focus on the essence. Simplicity often brings the most profound clarity.",
+		"It always seems impossible until it's done. Every great achievement begins with the belief that it can be done. Break barriers with perseverance and faith.",
+		"Strive not to be a success, but rather to be of value. Contribute meaningfully to the world around you. Success naturally follows when we prioritize purpose.",
+		"You miss 100% of the shots you don't take. Every opportunity ignored is a potential regret. Take chances and step out of your comfort zone to discover greatness.",
+	},
+	"hard": {
+		"At 6:45 a.m. on 12 March, the ferry left Pier 9 carrying 214 passengers, 38 cars and one very confused goat named Pepper.",
+		"\"Don't panic,\" she said, tapping the console. \"We have 3 options, 2 working engines and roughly 90 seconds to decide.\"",
+		"The recipe called for 250 g of flour, 2 eggs, 1/2 cup of milk and a pinch of salt; nobody could explain the extra 40 g of sugar.",
+		"Version 4.2.1 fixed 17 bugs, broke 3 features, and introduced a mysterious button labelled 'Do Not Press (Seriously)'.",
+		"Between 1998 and 2004, the club won 11 titles, lost 2 finals on penalties, and changed its kit colours a remarkable 6 times.",
+		"Her notes read: buy milk; call Sam (again!); finish the 30-page report by Friday, 5 p.m.; and, above all, sleep.",
+		"Order #A-7731 shipped on 03/14 via route 66-B; ETA: 2-4 days (weather permitting). Questions? Email help@example.com.",
+		"The vault code was 8-1-5-0, or possibly 8-5-1-0; either way, Agent K had exactly 47 seconds and 1 paperclip to spare.",
+	},
+}

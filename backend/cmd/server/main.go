@@ -54,6 +54,9 @@ func probe() int {
 }
 
 func run() error {
+	// All timestamps leave the API in UTC regardless of host timezone.
+	time.Local = time.UTC
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err
