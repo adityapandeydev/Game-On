@@ -1,72 +1,151 @@
+// Command server runs the Game-On API and serves the built web app.
 package main
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"errors"
+	"flag"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"game-on-backend/internal/config"
-	"game-on-backend/internal/database"
-	"game-on-backend/internal/router"
+	"gameon/internal/api"
+	"gameon/internal/auth"
+	"gameon/internal/config"
+	"gameon/internal/db"
+	"gameon/internal/game"
+	"gameon/internal/games"
+	"gameon/internal/httpx"
+	"gameon/internal/store"
+	"gameon/internal/web"
 )
 
 func main() {
-	cfg := config.LoadConfig()
+	healthcheck := flag.Bool("healthcheck", false, "probe the local server's /api/health and exit (for container HEALTHCHECK)")
+	flag.Parse()
+	if *healthcheck {
+		os.Exit(probe())
+	}
+	if err := run(); err != nil {
+		slog.Error("fatal", "err", err)
+		os.Exit(1)
+	}
+}
 
-	log.Println("🔌 Initializing PostgreSQL connection pool...")
-	pool, err := database.NewPool(cfg.DatabaseURL)
+// probe returns 0 when the server on $PORT answers /api/health.
+func probe() int {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:" + port + "/api/health")
 	if err != nil {
-		log.Fatalf("❌ Fatal: Failed to connect to PostgreSQL: %v", err)
+		return 1
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
+}
+
+func run() error {
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	var handler slog.Handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
+	if cfg.IsProduction() {
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	}
+	log := slog.New(handler)
+	slog.SetDefault(log)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	startCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	pool, err := db.Open(startCtx, cfg.DatabaseURL, cfg.DBMaxConns, log)
+	cancel()
+	if err != nil {
+		return err
 	}
 	defer pool.Close()
 
-	r := router.NewRouter(pool, cfg.JWTSecret)
+	st := store.New(pool)
+	plays := store.NewPlayCounter(st, log)
+	manager := game.NewManager(games.All()...)
 
-	server := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      r,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  60 * time.Second,
+	// Background workers stop when bg is cancelled, after the HTTP server drains.
+	bg, stopBG := context.WithCancel(context.Background())
+	defer stopBG()
+	playsDone := make(chan struct{})
+	go func() { plays.Run(bg, 10*time.Second); close(playsDone) }()
+	go manager.Run(bg)
+
+	sessions := &auth.Sessions{Signer: auth.NewSigner(cfg.JWTSecret, cfg.TokenTTL), Secure: cfg.IsProduction()}
+	mux := http.NewServeMux()
+	api.Routes(mux, api.Deps{
+		Log:      log,
+		Store:    st,
+		Plays:    plays,
+		Sessions: sessions,
+		Games:    manager,
+		Ctx:      bg,
+	})
+	if cfg.StaticDir != "" {
+		mux.Handle("/", web.Handler(os.DirFS(cfg.StaticDir)))
+		log.Info("serving web app", "dir", cfg.StaticDir)
 	}
 
-	// Channel to listen for errors coming from the listener
-	serverErrors := make(chan error, 1)
+	root := httpx.Chain(mux,
+		httpx.WithRequestID,
+		httpx.Recover(log),
+		httpx.RealIP(cfg.TrustProxy),
+		httpx.Logger(log),
+		httpx.SecurityHeaders(cfg.IsProduction()),
+		httpx.CORS(cfg.AllowedOrigins),
+		httpx.Gzip,
+		sessions.Middleware,
+	)
 
-	// Start the server
+	srv := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           root,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    16 << 10,
+		ErrorLog:          slog.NewLogLogger(handler, slog.LevelWarn),
+	}
+
+	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("🚀 Game-On Go + Chi backend running on port %s with PostgreSQL", cfg.Port)
-		serverErrors <- server.ListenAndServe()
+		log.Info("listening", "addr", cfg.Addr, "env", cfg.Env)
+		errCh <- srv.ListenAndServe()
 	}()
 
-	// Channel to listen for an interrupt or terminate signal from the OS
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	// Blocking main and waiting for shutdown
 	select {
-	case err := <-serverErrors:
-		if err != nil && err != http.ErrServerClosed {
-			log.Fatalf("❌ Server error: %v", err)
+	case err := <-errCh:
+		if !errors.Is(err, http.ErrServerClosed) {
+			return err
 		}
-
-	case sig := <-shutdown:
-		log.Printf("🛑 Main: %v : Start graceful shutdown", sig)
-
-		// Give outstanding requests a deadline for completion
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	case <-ctx.Done():
+		log.Info("shutting down")
+		shutCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
-
-		// Asking listener to shutdown and shed load
-		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("Graceful shutdown failed, forcing server close: %v", err)
-			_ = server.Close()
+		if err := srv.Shutdown(shutCtx); err != nil {
+			log.Warn("graceful shutdown incomplete", "err", err)
 		}
-		fmt.Println("👋 Game-On Go backend shut down gracefully")
 	}
+	stopBG()
+	<-playsDone // final flush of play counters
+	log.Info("stopped")
+	return nil
 }
