@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowRight, Flame, Play, ShieldCheck, Trophy } from "lucide-react";
+import { ArrowRight, Flame, Play, RotateCcw, ShieldCheck, Trophy, WifiOff } from "lucide-react";
 import { Page, Reveal } from "../components/layout/Page";
 import { GameCard } from "../components/GameCard";
 import { GameArt } from "../components/art/GameArt";
 import { Segmented } from "../components/ui/Segmented";
 import { Button } from "../components/ui/Button";
-import { Skeleton } from "../components/ui/Misc";
+import { Empty, Skeleton } from "../components/ui/Misc";
 import { useBoard, useGames, useMe } from "../lib/queries";
 import { ago, fmt, fmtCompact } from "../lib/format";
 import type { Game, Genre } from "../lib/types";
@@ -22,7 +22,7 @@ const filters: { value: Filter; label: string }[] = [
 ];
 
 export default function Home() {
-  const { data: games, isPending } = useGames();
+  const { data: games, isPending, isError, refetch, isFetching } = useGames();
   const { data: me } = useMe();
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -72,6 +72,18 @@ export default function Home() {
           <h2 className="display text-[clamp(1.6rem,3.2vw,2.2rem)]">All games</h2>
           <Segmented options={filters} value={filter} onChange={setFilter} label="Filter by genre" size="sm" className="scrollbar-none max-w-full overflow-x-auto" />
         </div>
+        {isError && !games && (
+          <Empty
+            icon={<WifiOff size={22} />}
+            title="Couldn't load the games"
+            body="The server isn't responding right now. Check that it's running, then try again."
+            action={
+              <Button variant="primary" icon={<RotateCcw size={18} />} status={isFetching ? "loading" : "idle"} onClick={() => void refetch()}>
+                Try again
+              </Button>
+            }
+          />
+        )}
         <m.ul layout className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {isPending &&
             Array.from({ length: 6 }, (_, i) => (
